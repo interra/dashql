@@ -34,35 +34,78 @@ type Response {
   fields: [ResponseField]
 }
 
+enum ComponentType {
+  Nvd3Chart
+  Nvd3PieChart
+  Metric
+}
+
+type Component {
+  type: ComponentType!
+  data: Response
+  appliedFilters: [Filter]
+}
+
 type DataResource {
   type: DataResourceType!
   resourceHandle: String!
   response: Response
 }
 
+# Legal filter operations
 enum Op {
-  LT
-  GT
-  IN
+  LT # Less Than
+  GT # Greater Than
+  IN # IN
 }
 
-input Filter {
-  op: Op # valid sql operator
+# Filter interface is used as an input parameter
+# for dataResources AND components
+type Filter {
+  op: Op # legal operation
   field: String # field on dataResource
-  type: String # this is enum in resolver
   vals: String # serialized JSON
 }
 
-input Resource {
+# Filter interface is used as an input parameter
+# for dataResources AND components
+input FilterInput {
+  op: String # valid sql operator -- use op enum in implementation
+  field: String # field on dataResource
+  vals: String # serialized JSON
+}
+
+# Define a dataResource which will be accessible locally 
+# for component queries
+input ResourceInput {
+  type: String! # this is enum in resolvers and should match DataResourceType
   resourceHandle: String! # used to generate memory store
-  type: String! # this is enum in resolvers
   url: String!
   q: String
   json: Boolean
 }
 
+input DataField {
+  field: String! # valid field on DataResource
+  op: Op
+}
+
+# Component definition from client
+# queries are executed against fetched dataResources
+input ComponentInput {
+  type: String! # enum in implementation - a valid component type
+  resourceHandle: String! # valid resource handle
+  dataFields: [DataField]
+}
+
 type Query {
-  getDataResources(resources: [Resource], filter: [Filter]): [DataResource]
+  # get top-level data objects from selected backend
+  # dataResources will be persisted locally and can be 
+  # queried by components
+  getDataResources(resources: [ResourceInput]!, filters: [FilterInput]): [DataResource]
+  # query persisted dataResources for component-level data
+  # returns data of shape required by component-type specified
+  getComponents(components: [ComponentInput]!): [Component]
 }
 `
 

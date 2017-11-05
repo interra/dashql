@@ -1,17 +1,26 @@
-const _ = require('lodash');
-// Sample data
-const { dash } = require('./../data/data');
+const _ = require('lodash')
 const rp = require('request-promise')
+const sqlite3 = require('sqlite3').verbose()
+const db = new sqlite3.Database(':memory:')
 
 const resolvers = {
     Query: {
       // fetch data
       // and parse as cartodb api response
       getDataResources: (_, {resources}) => {
+        console.log('gDR', resources)
         const all = resources.map(resource => {
         
         switch (resource.type) {
           case 'cartodb':
+            // check for resource in sqlite3
+            // check expiry
+            // if valid
+            //    load and send
+            // else
+            //    _fetchCartoResource(resource)
+            //    fire non-blocking write of data to sqlite3
+            //    return resource
             return _fetchCartoResource(resource)
 
           default:
@@ -19,14 +28,39 @@ const resolvers = {
               type: 'unknown', // this will throw graphQL type exception
               resourceHandle: resource.resourceHandle
             }
-        }
-      })
+          }
+        })
+
+        return Promise.all(all)
+      },
+
+      getComponents: (_, {components}) => {
+        console.log('gc', components)
+        const all = components.map(component => {
+          console.log(component.type)
+          switch (component.type) {
+            // should implement schema: enum ComponentType
+            case 'Nvd3Chart':
+              return _getNvd3ChartData(component)
+            case 'Nvd3PieChart':
+              return _getNvd3PieChartData(component)
+            case 'Metric':
+              return _getMetricData(component)
+            default:
+              return {
+                type: 'unknown'
+              }
+          }
+        })
 
       return Promise.all(all)
     }
   }
 }
 
+/**
+ * DataResource fetchers
+ **/
 const _fetchCartoResource = module.exports._fetchCartoResource = (resource) => {
     return new Promise((resolve, reject) => {
       rp({
@@ -60,7 +94,6 @@ const _parseCartoResponse = module.exports._parseCartoResponse = (_r) => {
     }
 
   })
-  console.log(rows, total_rows, time, fields)
 
   return {
     type: 'cartodb',
@@ -69,6 +102,34 @@ const _parseCartoResponse = module.exports._parseCartoResponse = (_r) => {
     time: time,
     fields: fields
   }
+}
+
+/**
+ * Component Type Handlers
+ **/
+
+const _getNvd3ChartData = module.exports._getNvd3ChartData = (component) => {
+  return new Promise((resolve, reject) => {
+    resolve({
+      type: "Nvd3Chart"
+    })
+  })
+}
+
+const _getNvd3PieChartData = module.exports._getNvd3PieChartData = (component) => {
+  return new Promise ((resolve, reject) => {
+    resolve({
+      type: "Nvd3PieChart"
+    })
+  })
+}
+
+const _getMetricData = module.exports._getMetricData = (component) => {
+  return new Promise ((resolve, reject) => {
+    resolve({
+      type: "Metric"
+    })
+  })
 }
 
 module.exports = resolvers;
