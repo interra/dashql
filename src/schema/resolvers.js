@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const rp = require('request-promise')
-const sqlite3 = require('sqlite3').verbose()
-const db = new sqlite3.Database(':memory:')
+const db = require('./db')
+const EXPIRY = 360
 
 const resolvers = {
     Query: {
@@ -13,14 +13,6 @@ const resolvers = {
         
         switch (resource.type) {
           case 'cartodb':
-            // check for resource in sqlite3
-            // check expiry
-            // if valid
-            //    load and send
-            // else
-            //    _fetchCartoResource(resource)
-            //    fire non-blocking write of data to sqlite3
-            //    return resource
             return _fetchCartoResource(resource)
 
           default:
@@ -59,10 +51,11 @@ const resolvers = {
 }
 
 /**
- * DataResource fetchers
- **/
+ * CARTO DataResource fetchers
+ ***/
 const _fetchCartoResource = module.exports._fetchCartoResource = (resource) => {
     return new Promise((resolve, reject) => {
+      console.log('fetch---')
       rp({
         uri: resource.url + resource.q,
         json: resource.json
@@ -74,6 +67,10 @@ const _fetchCartoResource = module.exports._fetchCartoResource = (resource) => {
           type: 'cartodb',
           resourceHandle: resource.resourceHandle
         }
+        
+        // NON-BLOCKING -> throw the data into sqlite3 for future
+        _addCartoResourceToDB(dataResource)
+
         resolve(dataResource)
       }).catch(err => {
         reject(err)
@@ -83,7 +80,8 @@ const _fetchCartoResource = module.exports._fetchCartoResource = (resource) => {
 
 const _parseCartoResponse = module.exports._parseCartoResponse = (_r) => {
   const response = JSON.parse(_r)
-  const rows = response.rows.map(JSON.stringify)
+  const rows = response.rows
+  console.log("Rows", rows)
   const total_rows = parseInt(response.total_rows)
   const time = parseFloat(response.time)
   const _fields = Object.keys(response.fields)
@@ -102,6 +100,17 @@ const _parseCartoResponse = module.exports._parseCartoResponse = (_r) => {
     time: time,
     fields: fields
   }
+}
+
+// @@TODO logging
+const _addCartoResourceToDB = module.exports = (dataResource) => {
+  db.insertResource(dataResource.resourceHandle, dataResource.response.fields, dataResource.response.rows)
+  .then(msg => {
+    console.log('carto resource added', dataResource)
+  })
+  .catch(err => {
+      console.log('failed to add carto resource', err)
+  })
 }
 
 /**
