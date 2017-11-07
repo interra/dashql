@@ -40,7 +40,7 @@ const resolvers = {
                 resolve({
                   type: component.type,
                   data: {
-                    rows: dataJson,
+                    JSONResponse: dataJson,
                     total_rows: data.length
                   }
 
@@ -87,22 +87,21 @@ const _fetchCartoResource = module.exports._fetchCartoResource = (resource) => {
 
 const _parseCartoResponse = module.exports._parseCartoResponse = (_r) => {
   const response = JSON.parse(_r)
-  const rows = stringify(response.rows)
+  const JSONResponse = stringify(response.rows)
   const total_rows = parseInt(response.total_rows)
   const time = parseFloat(response.time)
   const _fields = Object.keys(response.fields)
   const fields = _fields.map(field => {
     return {
-      
+      JSONResponse: JSONResponse,
       fieldName: field,
       fieldType: response.fields[field].type
     }
-
   })
 
   return {
     type: 'cartodb',
-    rows: rows,
+    JSONResponse: JSONResponse,
     total_rows: total_rows,
     time: time,
     fields: fields
@@ -111,8 +110,7 @@ const _parseCartoResponse = module.exports._parseCartoResponse = (_r) => {
 
 // @@TODO logging
 const _addCartoResourceToDB = module.exports = (dataResource) => {
-  // ugh sucks to have to juggle between string and object @@@@
-  const rows = JSON.parse(dataResource.response.rows)
+  const rows = JSON.parse(dataResource.response.JSONResponse)
   
   db.insertResource(dataResource.resourceHandle, dataResource.response.fields, rows)
   .then(msg => {

@@ -28,7 +28,7 @@ type ResponseField {
 }
 
 type Response {
-  rows: String #  json array containing response data
+  JSONResponse: String #  json array containing response data
   total_rows: Int
   time: Float # @@TODO get total response time
   fields: [ResponseField]
