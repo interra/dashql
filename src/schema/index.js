@@ -100,14 +100,18 @@ input ComponentInput {
 }
 
 type Query {
-  # get top-level data objects from selected backend
-  # dataResources will be persisted locally and can be 
-  # queried by components
-  getDataResources(resources: [ResourceInput]!, filters: [FilterInput]): [DataResource]
   # query persisted dataResources for component-level data
   # returns data of shape required by component-type specified
   getComponents(components: [ComponentInput]!): [Component]
 }
+
+type Mutation {
+  # fetch top-level data objects from selected backend
+  # dataResources and persist locally
+  populateCartoDataResources(resources: [ResourceInput]!, filters: [FilterInput]): [DataResource]
+}
+
+
 `
 
 module.exports = makeExecutableSchema({ typeDefs, resolvers })

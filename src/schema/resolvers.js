@@ -5,15 +5,16 @@ const stringify = require('json-stringify')
 const EXPIRY = 360
 
 const resolvers = {
-    Query: {
+    Mutation: {
       // fetch data
       // and parse as cartodb api response
-      getDataResources: (_, {resources}) => {
+      populateCartoDataResources: (_, {resources}) => {
         console.log('gDR', resources)
         const all = resources.map(resource => {
         
         switch (resource.type) {
           case 'cartodb':
+            console.log(1);
             return _fetchCartoResource(resource)
 
           default:
@@ -26,7 +27,9 @@ const resolvers = {
 
         return Promise.all(all)
       },
+    },
 
+    Query: {
       getComponents: (_, {components}) => {
         const all = components.map(component => {
           return new Promise ((resolve, reject) => {
@@ -67,6 +70,7 @@ const _fetchCartoResource = module.exports._fetchCartoResource = (resource) => {
         uri: resource.url + resource.q,
         json: resource.json
       }).then(json => {
+        console.log(2)
         const response = _parseCartoResponse(json)
         const dataResource =
         {
@@ -75,10 +79,12 @@ const _fetchCartoResource = module.exports._fetchCartoResource = (resource) => {
           resourceHandle: resource.resourceHandle
         }
         
-        // NON-BLOCKING -> throw the data into sqlite3 for future
-        _addCartoResourceToDB(dataResource)
+        _addCartoResourceToDB(dataResource).then(res => {
+          resolve(dataResource)
+        }).catch(err => {
+          reject(err)
+        })
 
-        resolve(dataResource)
       }).catch(err => {
         reject(err)
       })
@@ -112,13 +118,7 @@ const _parseCartoResponse = module.exports._parseCartoResponse = (_r) => {
 const _addCartoResourceToDB = module.exports = (dataResource) => {
   const rows = JSON.parse(dataResource.response.JSONResponse)
   
-  db.insertResource(dataResource.resourceHandle, dataResource.response.fields, rows)
-  .then(msg => {
-    console.log('carto resource added', dataResource)
-  })
-  .catch(err => {
-      console.log('failed to add carto resource', err)
-  })
+  return db.insertResource(dataResource.resourceHandle, dataResource.response.fields, rows)
 }
 
 /**

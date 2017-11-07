@@ -1,0 +1,38 @@
+# Update server with fresh API data
+mutation 
+{ populateCartoDataResources (resources:[{type: "cartodb", resourceHandle: "byServiceName", url: "https://phl.carto.com/api/v2/sql", q: "?q=SELECT service_name, COUNT(cartodb_id) FROM public_cases_fc WHERE service_name NOT IN ('Information Request') GROUP BY service_name ORDER BY count DESC"}])
+	{
+		type
+  	}
+}
+
+# Query for component data
+{ 
+# get two chart components
+getComponents (
+  	components: [
+  		{
+		        type: "Nvd3PieChart", dataFields: [
+    				{field: "service_name", resourceHandle: "byServiceName", fieldHandle: "x"},
+    				{field: "count", resourceHandle: "count", fieldHandle: "y"}
+        		]
+      		},
+      		{
+        		type: "Nvd3Chart", dataFields: [
+    				{field: "service_name", resourceHandle: "byServiceName", fieldHandle: "x"},
+    				{field: "count", resourceHandle: "count", fieldHandle: "y"}
+  			]
+  		}
+	] 
+) 
+
+{
+  	type
+	    data {
+      		total_rows
+      		time
+      		JSONResponse
+    	}
+}
+
+}

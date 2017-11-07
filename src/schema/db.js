@@ -70,13 +70,18 @@ const insertResource = (resourceHandle, fields, rows) => {
 // Really what we need here is a robust tool
 // that maps [DataFeeld] definitions to
 // a query
+//
+// @@ TODO should handle joins also
 const getComponentData = (component) => {
   const qs = component.dataFields.map(dataField => {
     return `${dataField.field} AS ${dataField.fieldHandle}`
   }).join(',')
+  
+  // @@ FOR NOW WE'RE USING THE FIRST DATAFIELD'S RESOURCEHANDLE
+  const table = component.dataFields[0].resourceHandle;
    
   console.log("component Data", qs)
-  return db.all(`SELECT ${qs} FROM byServiceName`)
+  return db.all(`SELECT ${qs} FROM ${table}`)
 }
 
 /**
