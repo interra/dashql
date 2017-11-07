@@ -22,12 +22,6 @@ const DEFAULT_ROW_FIELDS = [
 ]
 
 db.open('./database.sqlite')
-	.then(res => {
-		db.run('CREATE TABLE IF NOT EXISTS t(x INTEGER PRIMARY KEY ASC, y, z);').then(res => {
-			db.run('INSERT INTO t(y, z) VALUES (1, "this is foo")')
-		})
-	})
-  .catch(err => console.error(err.stack))
 
 /**
  * API
@@ -41,9 +35,9 @@ const insertResource = (resourceHandle, fields, rows) => {
   _createResourceTableIfNotExists(resourceHandle, fields)
     .then(msg => {
         _getCacheExpiry(resourceHandle).then(expiry => {
-          const expires = expiry[EXPIRY_FIELD]
+          const expires = (expiry) ? expiry[EXPIRY_FIELD] : 0 // reset cache if table no exists
           const isStale = Date.now() > expires
-          console.log("cache", "now", Date.now(), "expires", expires , isStale)
+          console.log("cache", "now", Date.now(), resourceHandle, expires , isStale)
           if (isStale) {
             _doInsertResource(resourceHandle, rows)
               .then(success => {
@@ -98,7 +92,9 @@ const _getTableDef = (fields) => {
 }
 
 const _createResourceTableIfNotExists = (resourceHandle, fields) => {
-  return db.run(`CREATE TABLE IF NOT EXISTS ${resourceHandle} (${_getTableDef(fields)})`) 
+  const tableDef = _getTableDef(fields)
+  console.log(resourceHandle, tableDef)
+  return db.run(`CREATE TABLE IF NOT EXISTS ${resourceHandle} (${tableDef})`) 
 }
 
 const _getCacheExpiry = (resourceHandle, expiry) => {
@@ -118,10 +114,7 @@ const _doInsertResource = (resourceHandle, rows) => {
           db.run(`INSERT INTO ${resourceHandle} VALUES (${values})`)
         })
         
-        db.run('COMMIT').then(commitMsg => {
-          _log('commit db inserts', commitMsg)
-          resolve(commitMsg)
-        })
+        return db.run('COMMIT')
 }
 
 const _log = () => {
