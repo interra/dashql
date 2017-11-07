@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const rp = require('request-promise')
 const db = require('./db')
+const stringify = require('json-stringify')
 const EXPIRY = 360
 
 const resolvers = {
@@ -27,25 +28,31 @@ const resolvers = {
       },
 
       getComponents: (_, {components}) => {
-        console.log('gc', components)
         const all = components.map(component => {
-          console.log(component.type)
-          switch (component.type) {
-            // should implement schema: enum ComponentType
-            case 'Nvd3Chart':
-              return _getNvd3ChartData(component)
-            case 'Nvd3PieChart':
-              return _getNvd3PieChartData(component)
-            case 'Metric':
-              return _getMetricData(component)
-            default:
-              return {
-                type: 'unknown'
-              }
-          }
+          return new Promise ((resolve, reject) => {
+            db.getComponentData(component)
+              .then(data => {
+                const dataJson = stringify(data)
+                console.log(typeof dataJson)
+                console.log('strungified', dataJson)
+                console.log('unstrung', data)
+
+                resolve({
+                  type: component.type,
+                  data: {
+                    rows: dataJson,
+                    total_rows: data.length
+                  }
+
+              })
+              })
+              .catch(err => {
+                reject(err)
+            })
+          })
         })
 
-      return Promise.all(all)
+        return Promise.all(all)
     }
   }
 }
@@ -80,13 +87,13 @@ const _fetchCartoResource = module.exports._fetchCartoResource = (resource) => {
 
 const _parseCartoResponse = module.exports._parseCartoResponse = (_r) => {
   const response = JSON.parse(_r)
-  const rows = response.rows
-  console.log("Rows", rows)
+  const rows = stringify(response.rows)
   const total_rows = parseInt(response.total_rows)
   const time = parseFloat(response.time)
   const _fields = Object.keys(response.fields)
   const fields = _fields.map(field => {
     return {
+      
       fieldName: field,
       fieldType: response.fields[field].type
     }
@@ -104,7 +111,10 @@ const _parseCartoResponse = module.exports._parseCartoResponse = (_r) => {
 
 // @@TODO logging
 const _addCartoResourceToDB = module.exports = (dataResource) => {
-  db.insertResource(dataResource.resourceHandle, dataResource.response.fields, dataResource.response.rows)
+  // ugh sucks to have to juggle between string and object @@@@
+  const rows = JSON.parse(dataResource.response.rows)
+  
+  db.insertResource(dataResource.resourceHandle, dataResource.response.fields, rows)
   .then(msg => {
     console.log('carto resource added', dataResource)
   })
@@ -115,10 +125,17 @@ const _addCartoResourceToDB = module.exports = (dataResource) => {
 
 /**
  * Component Type Handlers
+ *
+ * This could be in another library
+ * Also could be in the client
  **/
+const formatComponentData = (type, data) => {
+  // @@implement
+  return data
+}
 
 const _getNvd3ChartData = module.exports._getNvd3ChartData = (component) => {
-  return new Promise((resolve, reject) => {
+  return new Promise ((resolve, reject) => {
     resolve({
       type: "Nvd3Chart"
     })

@@ -66,8 +66,17 @@ const insertResource = (resourceHandle, fields, rows) => {
   })
 }
 
-const getResource = (resourceHandle, q) => {
-
+// This is a naive implementation
+// Really what we need here is a robust tool
+// that maps [DataFeeld] definitions to
+// a query
+const getComponentData = (component) => {
+  const qs = component.dataFields.map(dataField => {
+    return `${dataField.field} AS ${dataField.fieldHandle}`
+  }).join(',')
+   
+  console.log("component Data", qs)
+  return db.all(`SELECT ${qs} FROM byServiceName`)
 }
 
 /**
@@ -102,6 +111,7 @@ const _getCacheExpiry = (resourceHandle, expiry) => {
 }
 
 const _doInsertResource = (resourceHandle, rows) => {
+        // @@TODO we need to check if the schema has changed / do schema validation
         const expiry = Date.now() + CACHE_LIVE_MS
         
         db.run('BEGIN TRANSACTION')
@@ -123,5 +133,6 @@ const _log = () => {
 }
 
 module.exports = {
-  insertResource: insertResource
+  insertResource: insertResource,
+  getComponentData: getComponentData
 }

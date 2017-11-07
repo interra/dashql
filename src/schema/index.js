@@ -28,9 +28,9 @@ type ResponseField {
 }
 
 type Response {
-  rows: [String] # array of json strings containing response data
+  rows: String #  json array containing response data
   total_rows: Int
-  time: Float
+  time: Float # @@TODO get total response time
   fields: [ResponseField]
 }
 
@@ -85,8 +85,10 @@ input ResourceInput {
   json: Boolean
 }
 
-input DataField {
+input DataFieldInput {
+  resourceHandle: String! # valid resource handle
   field: String! # valid field on DataResource
+  fieldHandle: String # relabel the field for consumption by components
   op: Op
 }
 
@@ -94,8 +96,7 @@ input DataField {
 # queries are executed against fetched dataResources
 input ComponentInput {
   type: String! # enum in implementation - a valid component type
-  resourceHandle: String! # valid resource handle
-  dataFields: [DataField]
+  dataFields: [DataFieldInput]!
 }
 
 type Query {
