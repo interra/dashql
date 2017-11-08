@@ -11,7 +11,7 @@
  *
  * We could also keep this db cache 'warm' by doing requests via cron or others
  **/
-const sql = require('sequelize')
+const Sequelize = require('sequelize')
 const db = require('sqlite')
 
 // CONSTANTS
@@ -20,18 +20,29 @@ const EXPIRY_FIELD = 'expiryTimestamp'
 const DEFAULT_ROW_FIELDS = [
   `${EXPIRY_FIELD} INT`
 ]
+const DB_PATH = './database.sqlite'
 
-db.open('./database.sqlite')
+db.open(DB_PATH)
+
+const sequelize = new Sequelize({
+  host: 'localhost',
+  dialect: 'sqlite',
+  storage: DB_PATH,
+  freezeTableName: true
+})
 
 /**
  * API
  **/
-
 const insertResource = (resourceHandle, fields, rows) => {
-  return new Promise((resolve, reject) => {
-  
-  // @@TODO add drop table to transaction we don't want old data
-  
+    return new Promise ((resolve, reject) => {
+      const Model = _getSequelizeModel(resourceHandle, fields)
+
+      sequelize.sync().then(msg => {
+        Model.bulkCreate(rows).then(resolve)
+      }).catch(reject)
+    }) 
+   
   _createResourceTableIfNotExists(resourceHandle, fields)
     .then(msg => {
         _getCacheExpiry(resourceHandle).then(expiry => {
@@ -63,39 +74,51 @@ const insertResource = (resourceHandle, fields, rows) => {
       _log("error creating resource table", err)
       reject(err)
     }) // catch _createResourceTableIfNotExists
-  })
 }
 
-// This is a naive implementation
-// Really what we need here is a robust tool
-// that maps [DataFeeld] definitions to
-// a query
-//
-// @@ TODO should handle joins also
 const getComponentData = (component) => {
-  const qs = component.dataFields.map(dataField => {
-    return `${dataField.field} AS ${dataField.fieldHandle}`
-  }).join(',')
-  
-  // @@ FOR NOW WE'RE USING THE FIRST DATAFIELD'S RESOURCEHANDLE
-  const table = component.dataFields[0].resourceHandle;
-   
-  console.log("component Data", qs)
-  return db.all(`SELECT ${qs} FROM ${table}`)
+  return _sequelizeGetComponentData(component)
 }
 
 /**
  * Helpers
  **/
-// map from carto field definitions to sqlite3
-const fieldMappings = {
-  string: 'TEXT',
-  number: 'REAL'
-}
+const sequelizeFields= [
+"STRING",
+"CHAR",
+"TEXT",
+"TINYINT",
+"SMALLINT",
+"MEDIUMINT",
+"INTEGER",
+"BIGINT",
+"FLOAT",
+"DOUBLE",
+"DECIMAL",
+"REAL",
+"BOOLEAN",
+"BLOB",
+"ENUM",
+"DATE",
+"DATEONLY",
+"TIME",
+"NOW",
+"UUID",
+"UUIDV1",
+"UUIDV4",
+"HSTORE",
+"JSON",
+"JSONB",
+"ARRAY",
+"RANGE",
+"GEOMETRY",
+"GEOGRAPHY",
+"VIRTUAL",
+]
 
 const _getTableDef = (fields) => {
   const _fields = fields.map(field => {
-    const fieldType = fieldMappings[field.fieldType] || 'VARCHAR'
+    const fieldType = sequelizeFieldMappings[field.fieldType] || 'STRING'
     return field.fieldName + ' ' + fieldType
   })
 
@@ -116,6 +139,11 @@ const _getCacheExpiry = (resourceHandle, expiry) => {
 }
 
 const _doInsertResource = (resourceHandle, rows) => {
+  
+}
+
+// old implementation
+const __doInsertResource = (resourceHandle, rows) => {
         // @@TODO we need to check if the schema has changed / do schema validation
         const expiry = Date.now() + CACHE_LIVE_MS
         
@@ -130,6 +158,38 @@ const _doInsertResource = (resourceHandle, rows) => {
         })
         
         return db.run('COMMIT')
+}
+
+const _sequelizeGetComponentData = (component) => {
+  console.log("gCD-db1", component)
+  const Model = _getSequelizeModel(component.resourceHandle, component.dataFields)
+  // build select from datafields
+  // add WHERE from filters
+  // add SORT
+  // add LIMIT
+  return Model.findAll()
+}
+
+const _getSequelizeModel = (resourceHandle, fields) => {
+  // build sequelize model
+  console.log('db2', resourceHandle, fields)
+  let modelDef = fields.reduce((acc, item) => {
+    const fieldType = item.type
+    let _acc = Object.assign({}, acc)
+    _acc[item.field] = {
+      type: fieldType,
+      tableName: item.resourceHandle,
+    }
+
+    return _acc
+  }, {})
+
+  console.log("db2.1", resourceHandle, modelDef)
+   
+  const Model = sequelize.define(resourceHandle, modelDef)
+  const FOO = sequelize.define('foo', {foo: Sequelize.STRING})
+  
+  return Model 
 }
 
 const _log = () => {

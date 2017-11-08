@@ -25,16 +25,20 @@ const resolvers = {
           }
         })
 
+        console.log(2.5, all)
+
         return Promise.all(all)
       },
     },
 
     Query: {
       getComponents: (_, {components}) => {
+        console.log('gcD0',components)
         const all = components.map(component => {
           return new Promise ((resolve, reject) => {
             db.getComponentData(component)
               .then(data => {
+                console.log('gcD-rs-1')
                 const dataJson = stringify(data)
                 console.log(typeof dataJson)
                 console.log('strungified', dataJson)
@@ -99,12 +103,12 @@ const _parseCartoResponse = module.exports._parseCartoResponse = (_r) => {
   const _fields = Object.keys(response.fields)
   const fields = _fields.map(field => {
     return {
-      JSONResponse: JSONResponse,
-      fieldName: field,
-      fieldType: response.fields[field].type
+      field: field,
+      type: response.fields[field].type
     }
   })
-
+  
+  console.log(2.4, fields)
   return {
     type: 'cartodb',
     JSONResponse: JSONResponse,

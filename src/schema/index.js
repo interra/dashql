@@ -23,8 +23,8 @@ enum ResponseFieldType {
 }
 
 type ResponseField {
-  fieldName: String
-  fieldType: ResponseFieldType
+  field: String
+  type: ResponseFieldType
 }
 
 type Response {
@@ -59,6 +59,40 @@ enum Op {
   IN # IN
 }
 
+# from sequelize
+enum FieldType {
+	STRING 	
+	CHAR 	
+	TEXT
+	TINYINT
+	SMALLINT
+	MEDIUMINT
+	INTEGER
+	BIGINT
+	FLOAT
+	DOUBLE
+	DECIMAL
+	REAL
+	BOOLEAN
+	BLOB
+	ENUM
+	DATE
+	DATEONLY
+	TIME
+	NOW
+	UUID
+	UUIDV1
+	UUIDV4
+	HSTORE
+	JSON
+	JSONB
+	ARRAY
+	RANGE
+	GEOMETRY
+	GEOGRAPHY
+	VIRTUAL
+}
+
 # Filter interface is used as an input parameter
 # for dataResources AND components
 type Filter {
@@ -88,6 +122,7 @@ input ResourceInput {
 input DataFieldInput {
   resourceHandle: String! # valid resource handle
   field: String! # valid field on DataResource
+  type: String! # valid field type
   fieldHandle: String # relabel the field for consumption by components
   op: Op
 }
@@ -96,6 +131,7 @@ input DataFieldInput {
 # queries are executed against fetched dataResources
 input ComponentInput {
   type: String! # enum in implementation - a valid component type
+  resourceHandle: String!
   dataFields: [DataFieldInput]!
 }
 
@@ -108,7 +144,7 @@ type Query {
 type Mutation {
   # fetch top-level data objects from selected backend
   # dataResources and persist locally
-  populateCartoDataResources(resources: [ResourceInput]!, filters: [FilterInput]): [DataResource]
+  populateCartoDataResources(resources: [ResourceInput]!, dataFields: [DataFieldInput]!, filters: [FilterInput]): [DataResource]
 }
 
 

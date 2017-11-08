@@ -1,38 +1,57 @@
-# Update server with fresh API data
 mutation 
-{ populateCartoDataResources (resources:[{type: "cartodb", resourceHandle: "byServiceName", url: "https://phl.carto.com/api/v2/sql", q: "?q=SELECT service_name, COUNT(cartodb_id) FROM public_cases_fc WHERE service_name NOT IN ('Information Request') GROUP BY service_name ORDER BY count DESC"}])
-	{
-		type
-  	}
+{ 
+
+populateCartoDataResources (
+	resources:[
+		{
+			type: "cartodb"
+			resourceHandle: "byServiceName"
+			url: "https://phl.carto.com/api/v2/sql"
+			q: "?q=SELECT service_name, COUNT(cartodb_id) FROM public_cases_fc WHERE service_name NOT IN ('Information Request') GROUP BY service_name ORDER BY count DESC"
+		}
+	],
+	dataFields: [
+		{
+			resourceHandle: "byServiceName"
+			field: "service_name"
+			type: "STRING"
+		},
+		{
+			resourceHandle: "byServiceName"
+			field: "count"
+			type: "INTEGER"
+		}
+	]
+)
+        {
+                type
+        }
 }
 
-# Query for component data
+
 { 
-# get two chart components
 getComponents (
   	components: [
   		{
-		        type: "Nvd3PieChart", dataFields: [
-    				{field: "service_name", resourceHandle: "byServiceName", fieldHandle: "x"},
-    				{field: "count", resourceHandle: "count", fieldHandle: "y"}
-        		]
-      		},
-      		{
-        		type: "Nvd3Chart", dataFields: [
-    				{field: "service_name", resourceHandle: "byServiceName", fieldHandle: "x"},
-    				{field: "count", resourceHandle: "count", fieldHandle: "y"}
+        type: "Nvd3PieChart", resourceHandle: "byServiceName", dataFields: [
+          {field: "service_name", resourceHandle: "byServiceName", type: "STRING"},
+    			{field: "count", resourceHandle: "byServiceName", type: "INTEGER"}
+        ]
+      },
+      {
+        type: "Nvd3Chart", resourceHandle: "byServiceName", dataFields: [
+    			{field: "service_name", resourceHandle: "byServiceName", fieldHandle: "x", type: "STRING"},
+    			{field: "count", resourceHandle: "byServiceName", fieldHandle: "y", type: "INTEGER"}
   			]
   		}
-	] 
-) 
-
-{
+		] 
+	) 
+  {
   	type
-	    data {
-      		total_rows
-      		time
-      		JSONResponse
-    	}
-}
-
+    data {
+      total_rows
+      time
+      JSONResponse
+    }
+	}
 }
