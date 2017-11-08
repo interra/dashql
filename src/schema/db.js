@@ -164,10 +164,22 @@ const _sequelizeGetComponentData = (component) => {
   console.log("gCD-db1", component)
   const Model = _getSequelizeModel(component.resourceHandle, component.dataFields)
   // build select from datafields
+  let options = {}
   // add WHERE from filters
+  if (component.where) {
+    options.where = JSON.parse(component.where)
+  }
+
+  if (component.order) {
+    options.order = JSON.parse(component.order)
+  }
+
+  if (component.limit) {
+    options.limit = component.limit
+  }
   // add SORT
   // add LIMIT
-  return Model.findAll()
+  return Model.findAll(options)
 }
 
 const _getSequelizeModel = (resourceHandle, fields) => {

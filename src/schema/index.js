@@ -43,7 +43,6 @@ enum ComponentType {
 type Component {
   type: ComponentType!
   data: Response
-  appliedFilters: [Filter]
 }
 
 type DataResource {
@@ -133,6 +132,9 @@ input ComponentInput {
   type: String! # enum in implementation - a valid component type
   resourceHandle: String!
   dataFields: [DataFieldInput]!
+  where: String # JSON encoding of sequelize where
+  order: String # JSON encoding of sequelize order http://sequelize.readthedocs.io/en/latest/docs/querying/#ordering
+  limit: Int # JSON encoding of sequelize limit
 }
 
 type Query {
