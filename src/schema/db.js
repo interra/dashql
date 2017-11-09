@@ -74,10 +74,19 @@ const insertResource = (resourceHandle, fields, rows) => {
       _log("error creating resource table", err)
       reject(err)
     }) // catch _createResourceTableIfNotExists
+
 }
 
+
+
 const getComponentData = (component) => {
-  return _sequelizeGetComponentData(component)
+  const Model = _getSequelizeModel(component.resourceHandle, component.dataFields)
+
+  const data = _sequelizeGetComponentData(Model, component)
+
+  const fields = _sequelizeGetFields(Model)
+
+  return Promise.all([data,fields])
 }
 
 /**
@@ -160,31 +169,52 @@ const __doInsertResource = (resourceHandle, rows) => {
         return db.run('COMMIT')
 }
 
-const _sequelizeGetComponentData = (component) => {
-  console.log("gCD-db1", component)
-  const Model = _getSequelizeModel(component.resourceHandle, component.dataFields)
+const _sequelizeGetComponentData = (Model, component) => {
+  console.log("gCD-db1")
   // build select from datafields
   let options = {}
+  
   // add WHERE from filters
   if (component.where) {
     options.where = JSON.parse(component.where)
   }
 
+  // add ORDER
   if (component.order) {
     options.order = JSON.parse(component.order)
   }
-
+  
+  // add LIMIT
   if (component.limit) {
     options.limit = component.limit
   }
-  // add SORT
-  // add LIMIT
+  
   return Model.findAll(options)
+}
+
+// get sql defs from sequelize and return
+// fields array for graphql api
+const _sequelizeGetFields = (Model) => {
+  return new Promise((resolve, reject) => {
+    Model.describe()
+      .then(sqlDefs => {
+      const fields = Object.keys(sqlDefs).map(key => {
+        return {
+          field: key,
+          type: sqlDefs[key].type,
+          nullable: sqlDefs[key].allowNull
+        }
+      })
+      console.log('f', fields)
+      resolve(fields)
+    })
+    .catch(err => reject)
+  })
 }
 
 const _getSequelizeModel = (resourceHandle, fields) => {
   // build sequelize model
-  console.log('db2', resourceHandle, fields)
+  console.log('db2')
   let modelDef = fields.reduce((acc, item) => {
     const fieldType = item.type
     let _acc = Object.assign({}, acc)
@@ -211,5 +241,5 @@ const _log = () => {
 
 module.exports = {
   insertResource: insertResource,
-  getComponentData: getComponentData
+  getComponentData: getComponentData,
 }

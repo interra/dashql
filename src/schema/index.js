@@ -4,9 +4,8 @@ const resolvers = require('./resolvers')
 
 const typeDefs = `
 ##
-# DATA RESOURCES
+# DATA RESOURCES (BETA)
 ##
-
 enum DataResourceType {
   cartodb
   ckan
@@ -14,21 +13,18 @@ enum DataResourceType {
   postgres
 }
 
-enum ResponseFieldType {
-  number
-  string
-  boolean
-  date
-  geometry
-}
-
 type ResponseField {
   field: String
-  type: ResponseFieldType
+  type: String
+  nullable: Boolean
 }
 
 type Response {
-  JSONResponse: String #  json array containing response data
+  # JSON String  contains raw response data in form:
+  # [
+  #  { fieldName1:  value, fieldName2: value, ...}
+  # ]
+  JSONResponse: String
   total_rows: Int
   time: Float # @@TODO get total response time
   fields: [ResponseField]
@@ -45,9 +41,15 @@ type Component {
   data: Response
 }
 
+# Type DataResource describes a dataResource:
+# An imported set of data which can be queried
+# using a sequelize format (BETA)
 type DataResource {
+  # only cartodb for now
   type: DataResourceType!
+  # Canonical identifier for this resource
   resourceHandle: String!
+  # Response object containing resource data
   response: Response
 }
 
@@ -92,22 +94,6 @@ enum FieldType {
 	VIRTUAL
 }
 
-# Filter interface is used as an input parameter
-# for dataResources AND components
-type Filter {
-  op: Op # legal operation
-  field: String # field on dataResource
-  vals: String # serialized JSON
-}
-
-# Filter interface is used as an input parameter
-# for dataResources AND components
-input FilterInput {
-  op: String # valid sql operator -- use op enum in implementation
-  field: String # field on dataResource
-  vals: String # serialized JSON
-}
-
 # Define a dataResource which will be accessible locally 
 # for component queries
 input ResourceInput {
@@ -121,7 +107,7 @@ input ResourceInput {
 input DataFieldInput {
   resourceHandle: String! # valid resource handle
   field: String! # valid field on DataResource
-  type: String! # valid field type
+  type: String! # valid field type based on sequelize field types
   fieldHandle: String # relabel the field for consumption by components
   op: Op
 }
@@ -130,23 +116,26 @@ input DataFieldInput {
 # queries are executed against fetched dataResources
 input ComponentInput {
   type: String! # enum in implementation - a valid component type
+  # the name of the resource to query
   resourceHandle: String!
+  # Select fields from resource
   dataFields: [DataFieldInput]!
-  where: String # JSON encoding of sequelize where
-  order: String # JSON encoding of sequelize order http://sequelize.readthedocs.io/en/latest/docs/querying/#ordering
-  limit: Int # JSON encoding of sequelize limit
+  # JSON encoding of sequelize where - use any available sequelize operators on query http://docs.sequelizejs.com/manual/tutorial/querying.html#operators
+  where: String   
+   # JSON encoding of order http://sequelize.readthedocs.io/en/latest/docs/querying/#ordering
+   order: String  
+   limit: Int 
 }
 
+# Queries persisted dataResources for component-level data
 type Query {
-  # query persisted dataResources for component-level data
-  # returns data of shape required by component-type specified
   getComponents(components: [ComponentInput]!): [Component]
 }
 
+# Fetches top-level data objects from selected backend
+# and persists data locally as query-able dataResource
 type Mutation {
-  # fetch top-level data objects from selected backend
-  # dataResources and persist locally
-  populateCartoDataResources(resources: [ResourceInput]!, dataFields: [DataFieldInput]!, filters: [FilterInput]): [DataResource]
+  populateCartoDataResources(resources: [ResourceInput]!, dataFields: [DataFieldInput]!): [DataResource]
 }
 
 

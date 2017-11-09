@@ -9,7 +9,7 @@ const resolvers = {
       // fetch data
       // and parse as cartodb api response
       populateCartoDataResources: (_, {resources}) => {
-        console.log('gDR', resources)
+        console.log('gDR')
         const all = resources.map(resource => {
         
         switch (resource.type) {
@@ -33,25 +33,25 @@ const resolvers = {
 
     Query: {
       getComponents: (_, {components}) => {
-        console.log('gcD0',components)
+        console.log('gcD0')
         const all = components.map(component => {
           return new Promise ((resolve, reject) => {
-            db.getComponentData(component)
-              .then(data => {
-                console.log('gcD-rs-1')
+              db.getComponentData(component)
+             .then( (res) => {
+                const data = res[0]
+                const fields = res[1]
+                console.log('gcD-rs-1', fields)
                 const dataJson = stringify(data)
                 console.log(typeof dataJson)
-                console.log('strungified', dataJson)
-                console.log('unstrung', data)
 
                 resolve({
                   type: component.type,
+                  fields: fields,
                   data: {
                     JSONResponse: dataJson,
                     total_rows: data.length
                   }
-
-              })
+                })
               })
               .catch(err => {
                 reject(err)
