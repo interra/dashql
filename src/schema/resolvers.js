@@ -46,10 +46,10 @@ const resolvers = {
 
                 resolve({
                   type: component.type,
-                  fields: fields,
                   data: {
                     JSONResponse: dataJson,
-                    total_rows: data.length
+                    total_rows: data.length,
+                    fields: fields
                   }
                 })
               })
@@ -118,11 +118,21 @@ const _parseCartoResponse = module.exports._parseCartoResponse = (_r) => {
   }
 }
 
+_cartoToSequelizeMap = {
+  string: 'STRING',
+  number: 'REAL'
+}
 // @@TODO logging
 const _addCartoResourceToDB = module.exports = (dataResource) => {
   const rows = JSON.parse(dataResource.response.JSONResponse)
-  
-  return db.insertResource(dataResource.resourceHandle, dataResource.response.fields, rows)
+  const fields = dataResource.response.fields.map(field => {
+    console.log('>>>>>>', field)
+    field.type = _cartoToSequelizeMap[field.type]
+    console.log('>>', field)
+    return field 
+  })
+  console.log("FFF", fields)
+  return db.insertResource(dataResource.resourceHandle, fields, rows)
 }
 
 /**
