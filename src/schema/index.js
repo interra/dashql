@@ -14,9 +14,9 @@ enum DataResourceType {
 }
 
 type ResponseField {
-  field: String
-  type: String
-  nullable: Boolean
+  field: String!
+  type: String!
+  required: Boolean!
 }
 
 type Response {
@@ -31,13 +31,13 @@ type Response {
 }
 
 enum ComponentType {
-  Nvd3Chart
-  Nvd3PieChart
+  Chart
   Metric
 }
 
 type Component {
   type: ComponentType!
+  componentKey: String!
   data: Response
 }
 
@@ -118,6 +118,7 @@ input ComponentInput {
   type: String! # enum in implementation - a valid component type
   # the name of the resource to query
   resourceHandle: String!
+  componentKey: String! # this is a unique string that should map to a dashboard component
   # Select fields from resource
   dataFields: [DataFieldInput]!
   # JSON encoding of sequelize where - use any available sequelize operators on query http://docs.sequelizejs.com/manual/tutorial/querying.html#operators

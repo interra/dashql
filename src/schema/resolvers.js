@@ -40,12 +40,14 @@ const resolvers = {
              .then( (res) => {
                 const data = res[0]
                 const fields = res[1]
+                console.log('gcD-rs-.5', component)
                 console.log('gcD-rs-1', fields)
                 const dataJson = stringify(data)
                 console.log(typeof dataJson)
 
                 resolve({
                   type: component.type,
+                  componentKey: component.componentKey,
                   data: {
                     JSONResponse: dataJson,
                     total_rows: data.length,
