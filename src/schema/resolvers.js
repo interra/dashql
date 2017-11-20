@@ -124,7 +124,7 @@ _cartoToSequelizeMap = {
   string: 'STRING',
   number: 'REAL'
 }
-// @@TODO logging
+
 const _addCartoResourceToDB = module.exports = (dataResource) => {
   const rows = JSON.parse(dataResource.response.JSONResponse)
   const fields = dataResource.response.fields.map(field => {
@@ -135,41 +135,6 @@ const _addCartoResourceToDB = module.exports = (dataResource) => {
   })
   console.log("FFF", fields)
   return db.insertResource(dataResource.resourceHandle, fields, rows)
-}
-
-/**
- * Component Type Handlers
- *
- * This could be in another library
- * Also could be in the client
- **/
-const formatComponentData = (type, data) => {
-  // @@implement
-  return data
-}
-
-const _getNvd3ChartData = module.exports._getNvd3ChartData = (component) => {
-  return new Promise ((resolve, reject) => {
-    resolve({
-      type: "Nvd3Chart"
-    })
-  })
-}
-
-const _getNvd3PieChartData = module.exports._getNvd3PieChartData = (component) => {
-  return new Promise ((resolve, reject) => {
-    resolve({
-      type: "Nvd3PieChart"
-    })
-  })
-}
-
-const _getMetricData = module.exports._getMetricData = (component) => {
-  return new Promise ((resolve, reject) => {
-    resolve({
-      type: "Metric"
-    })
-  })
 }
 
 module.exports = resolvers;
