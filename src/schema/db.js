@@ -77,8 +77,6 @@ const insertResource = (resourceHandle, fields, rows) => {
 
 }
 
-
-
 const getComponentData = (component) => {
   const Model = _getSequelizeModel(component.resourceHandle, component.dataFields)
 
@@ -170,13 +168,13 @@ const __doInsertResource = (resourceHandle, rows) => {
 }
 
 const _sequelizeGetComponentData = (Model, component) => {
-  console.log("gCD-db1")
+  console.log("gCD-db1", component)
   // build select from datafields
   let options = {}
   
   // add WHERE from filters
   if (component.where) {
-    options.where = JSON.parse(component.where)
+    console.log("WHERE", component.where)
   }
 
   // add ORDER
@@ -189,6 +187,14 @@ const _sequelizeGetComponentData = (Model, component) => {
     options.limit = component.limit
   }
   
+  if (component.where) {
+    options.where = {}
+    component.where.map(wh => {
+      options.where[wh.attribute] = wh.value
+    })
+  }
+  
+//  return Model.findAndCount(options)
   return Model.findAll(options)
 }
 

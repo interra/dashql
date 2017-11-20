@@ -122,10 +122,15 @@ input ComponentInput {
   # Select fields from resource
   dataFields: [DataFieldInput]!
   # JSON encoding of sequelize where - use any available sequelize operators on query http://docs.sequelizejs.com/manual/tutorial/querying.html#operators
-  where: String   
+  where: [WhereInput]
    # JSON encoding of order http://sequelize.readthedocs.io/en/latest/docs/querying/#ordering
    order: String  
    limit: Int 
+}
+
+input WhereInput {
+  attribute: String! # The name of the field to use in the where filter
+  value: String! # The value to filter by
 }
 
 # Queries persisted dataResources for component-level data
