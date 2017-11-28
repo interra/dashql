@@ -1,5 +1,5 @@
 /**
- * This isn't really a persistence layer -
+ e This isn't really a persistence layer -
  * We should be able to regenerate this data at any time
  *
  * The database layer acts as more of a cache
@@ -172,11 +172,6 @@ const _sequelizeGetComponentData = (Model, component) => {
   // build select from datafields
   let options = {}
   
-  // add WHERE from filters
-  if (component.where) {
-    console.log("WHERE", component.where)
-  }
-
   // add ORDER
   if (component.order) {
     options.order = JSON.parse(component.order)
