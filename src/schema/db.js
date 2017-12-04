@@ -23,13 +23,18 @@ const DEFAULT_ROW_FIELDS = [
 const DB_PATH = './database.sqlite'
 
 db.open(DB_PATH)
+const sequelize = new Sequelize('postgres://postgres:postgres@localhost:5432/postgres', 
+  {
+    logging: false,
+    pool: {
+      max: 10, 
+      min: 0,
+      idle: 20000,
+      acquire: 20000
+    }   
+  })
 
-const sequelize = new Sequelize({
-  host: 'localhost',
-  dialect: 'sqlite',
-  storage: DB_PATH,
-  freezeTableName: true
-})
+const Op = sequelize.Op
 
 /**
  * API
@@ -179,15 +184,60 @@ const _sequelizeGetComponentData = (Model, component) => {
   
   // add LIMIT
   if (component.limit) {
-    options.limit = component.limit
+    options.limit = component.limit || 10
   }
   
+  // ADD WHERE
+  // http://docs.sequelizejs.com/manual/tutorial/querying.html
+  //
+  // we are looking for component such as:
+  // {
+  //   where: [
+  //     {
+  //       attribute: "service_name",
+  //       value: "Abandoned Vehicle"
+  //     },
+  //     {
+  //       opName: "or",
+  //       attribute: "agency_responsible",
+  //       value: ["Parks and Recreation", "Public Health"]
+  //     }, 
+  //     {
+  //       opName: "gte",
+  //       attribute: "requested_datetime",
+  //       value: "Fri Dec 01 2017 17:11:59 GMT-0500 (EST)"
+  //     }
+  //   ]
+  // }
+  //
   if (component.where) {
     options.where = {}
+
     component.where.map(wh => {
-      options.where[wh.attribute] = wh.value
+      if (wh.opName) {
+        const operator = Op[wh.opName]
+        const attr = wh.attribute
+        const val = wh.value
+        options.where[wh.attribute] = {
+          operator : val
+        }
+      } else {
+        options.where[wh.attribute] = wh.value
+      }
     })
   }
+  
+  if (component.count) {
+    options.attributes = [component.count, [sequelize.fn('count', sequelize.col(component.count)), 'count']]
+    options.group = [component.count]
+  }
+  
+  // ADD GROUP BY
+  /*
+  if (component.group) {
+    options.group = component.group
+  }
+  */
   
 //  return Model.findAndCount(options)
   return Model.findAll(options)
@@ -224,12 +274,20 @@ const _getSequelizeModel = (resourceHandle, fields) => {
       tableName: item.resourceHandle,
     }
 
+    _acc.createdAt = {
+        type: Sequelize.DATE,
+        field: 'created_at'
+    }
+
+    _acc.updatedAt = {
+        type: Sequelize.DATE,
+        field: 'updated_at'
+    }
+
     return _acc
   }, {})
 
-  console.log("db2.1", resourceHandle, modelDef)
-   
-  const Model = sequelize.define(resourceHandle, modelDef)
+  const Model = sequelize.define(resourceHandle, modelDef, {freezeTableName: true})
   const FOO = sequelize.define('foo', {foo: Sequelize.STRING})
   
   return Model 
