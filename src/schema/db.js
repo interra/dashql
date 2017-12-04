@@ -53,7 +53,6 @@ const insertResource = (resourceHandle, fields, rows) => {
         _getCacheExpiry(resourceHandle).then(expiry => {
           const expires = (expiry) ? expiry[EXPIRY_FIELD] : 0 // reset cache if table no exists
           const isStale = Date.now() > expires
-          console.log("cache", "now", Date.now(), resourceHandle, expires , isStale)
           if (isStale) {
             _doInsertResource(resourceHandle, rows)
               .then(success => {
@@ -142,7 +141,6 @@ const _getTableDef = (fields) => {
 
 const _createResourceTableIfNotExists = (resourceHandle, fields) => {
   const tableDef = _getTableDef(fields)
-  console.log(resourceHandle, tableDef)
   return db.run(`CREATE TABLE IF NOT EXISTS ${resourceHandle} (${tableDef})`) 
 }
 
@@ -173,7 +171,6 @@ const __doInsertResource = (resourceHandle, rows) => {
 }
 
 const _sequelizeGetComponentData = (Model, component) => {
-  console.log("gCD-db1", component)
   // build select from datafields
   let options = {}
   
@@ -184,7 +181,7 @@ const _sequelizeGetComponentData = (Model, component) => {
   
   // add LIMIT
   if (component.limit) {
-    options.limit = component.limit || 10
+    options.limit = component.limit
   }
   
   // ADD WHERE
@@ -211,6 +208,7 @@ const _sequelizeGetComponentData = (Model, component) => {
   // }
   //
   if (component.where) {
+    console.log("WHERE 1", component)
     options.where = {}
 
     component.where.map(wh => {
@@ -226,10 +224,16 @@ const _sequelizeGetComponentData = (Model, component) => {
       }
     })
   }
+
+  console.log("WHERE 2", options.where)
   
   if (component.count) {
     options.attributes = [component.count, [sequelize.fn('count', sequelize.col(component.count)), 'count']]
     options.group = [component.count]
+  }
+
+  if (component.aggregate) {
+    
   }
   
   // ADD GROUP BY
@@ -256,7 +260,6 @@ const _sequelizeGetFields = (Model) => {
           nullable: sqlDefs[key].allowNull
         }
       })
-      console.log('f', fields)
       resolve(fields)
     })
     .catch(err => reject)
@@ -265,7 +268,6 @@ const _sequelizeGetFields = (Model) => {
 
 const _getSequelizeModel = (resourceHandle, fields) => {
   // build sequelize model
-  console.log('db2')
   let modelDef = fields.reduce((acc, item) => {
     const fieldType = item.type
     let _acc = Object.assign({}, acc)

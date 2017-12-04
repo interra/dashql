@@ -9,12 +9,10 @@ const resolvers = {
       // fetch data
       // and parse as cartodb api response
       populateCartoDataResources: (_, {resources}) => {
-        console.log('gDR')
         const all = resources.map(resource => {
         
         switch (resource.type) {
           case 'cartodb':
-            console.log(1);
             return _fetchCartoResource(resource)
 
           default:
@@ -25,7 +23,6 @@ const resolvers = {
           }
         })
 
-        console.log(2.5, all)
 
         return Promise.all(all)
       },
@@ -33,17 +30,13 @@ const resolvers = {
 
     Query: {
       getComponents: (_, {components}) => {
-        console.log('gcD0')
         const all = components.map(component => {
           return new Promise ((resolve, reject) => {
               db.getComponentData(component)
              .then( (res) => {
                 const data = res[0]
                 const fields = res[1]
-                console.log('gcD-rs-.5', component)
-                console.log('gcD-rs-1', fields)
                 const dataJson = stringify(data)
-                console.log(typeof dataJson)
 
                 resolve({
                   type: component.type,
@@ -71,12 +64,10 @@ const resolvers = {
  ***/
 const _fetchCartoResource = module.exports._fetchCartoResource = (resource) => {
     return new Promise((resolve, reject) => {
-      console.log('fetch---')
       rp({
         uri: resource.url + resource.q,
         json: resource.json
       }).then(json => {
-        console.log(2)
         const response = _parseCartoResponse(json)
         const dataResource =
         {
@@ -110,7 +101,6 @@ const _parseCartoResponse = module.exports._parseCartoResponse = (_r) => {
     }
   })
   
-  console.log(2.4, fields)
   return {
     type: 'cartodb',
     JSONResponse: JSONResponse,
@@ -128,12 +118,9 @@ _cartoToSequelizeMap = {
 const _addCartoResourceToDB = module.exports = (dataResource) => {
   const rows = JSON.parse(dataResource.response.JSONResponse)
   const fields = dataResource.response.fields.map(field => {
-    console.log('>>>>>>', field)
     field.type = _cartoToSequelizeMap[field.type]
-    console.log('>>', field)
     return field 
   })
-  console.log("FFF", fields)
   return db.insertResource(dataResource.resourceHandle, fields, rows)
 }
 
