@@ -11,8 +11,9 @@ const sequelize = new Sequelize('postgres://postgres:postgres@localhost:5432/pos
   })
 const Op = sequelize.Op
 
-// note -t we are currently doing resource 
+// note -we are currently doing resource 
 // insertion via a node module
+// not via API
 const insertResource = () => {
   return 'NOT IMPLEMENTED'
 }
@@ -68,6 +69,9 @@ const sequelizeFields= [
 const _sequelizeGetComponentData = (component) => {
   // build select from datafields
   let options = {}
+  const where = component.where || []
+  const neighborhoods= where.filter(w => w.attribute === "neighborhood")
+  const whereArr = where.filter(w => w.attribute !== "neighborhood")
   
   // add ORDER
   if (component.order) {
@@ -103,16 +107,14 @@ const _sequelizeGetComponentData = (component) => {
    * ]
    * }
    **/ 
-  if (component.where) {
+  if (where) {
     console.log("WHERE 1", component)
     options.where = {}
 
     // pull out neighborhood stuff and handle
     // separately
-    const neighborhoodArr = component.where.filter(w => w.attribute === "neighborhood")
-    const whereArr = component.where.filter(w => w.attribute !== "neighborhood")
 
-    console.log("NEIGHBORHOODS", neighborhoodArr)
+    console.log("NEIGHBORHOODS", neighborhoods)
     console.log("NOT NEIGH", whereArr.length)
     
     whereArr.forEach(wh => {
@@ -158,8 +160,39 @@ const _sequelizeGetComponentData = (component) => {
  const mock = 'SELECT "service_name", count("service_name") AS "count" FROM philly_311 WHERE (ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'MANTUA\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true OR ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'MANTUA\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true OR ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'CEDAR_PARK\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true) GROUP BY "service_name";' 
 
   const raw = sequelize.dialect.QueryGenerator.selectQuery(component.resourceHandle, options)
+  const hasWhere = whereArr.length
+  const withGISQuery = spliceGISQuery(raw, neighborhoods)
   console.log("RAW", raw)
-  return sequelize.query(mock)
+  console.log("WITHGIS", withGISQuery)
+  return sequelize.query(withGISQuery)
+}
+
+// INSERT POSTGIS Query into raq sequelize query
+const spliceGISQuery = (raw, neighborhoods) => {
+  const insert = (str, index, value) => {
+    return str.substr(0, index) + value + str.substr(index);
+  }
+
+  if (neighborhoods.length > 0) {
+    const hoods = neighborhoods[0].value
+    const gisQueryParts = hoods.map(ng => {
+      console.log("NG:>>", ng)
+      return `ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'${ng}\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true`
+  }, '')
+    console.log('BITS', gisQueryParts)
+    const gisWHEREClause = `(${gisQueryParts.join(' OR ')})`
+    console.log('CLAUSE', gisWHEREClause)
+    const WHEREIndex = raw.indexOf('WHERE') + 5 // add 5 so that it goes AFTER the WHERE
+    console.log('WHERE', `(${WHEREIndex})`)
+    if (WHEREIndex > 0) {
+       return insert(raw, WHEREIndex, ` ${gisWHEREClause} AND `)
+    } else {
+      return splicedQuery = raw.append(` ${gisWHEREClause};`)
+    }
+    // insert gisWHEREClause after `WHERE` if hasWhere else append to raw
+  }
+
+  return raw
 }
 
 // get sql defs from sequelize and return
