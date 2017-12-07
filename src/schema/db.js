@@ -1,6 +1,5 @@
 /**
- e This isn't really a persistence layer -
- * We should be able to regenerate this data at any time
+ e This isn't really a persistence layer - * We should be able to regenerate this data at any time
  *
  * The database layer acts as more of a cache
  * Once data is fetched we import it here for use in subqueries
@@ -184,34 +183,48 @@ const _sequelizeGetComponentData = (Model, component) => {
     options.limit = component.limit
   }
   
-  // ADD WHERE
-  // http://docs.sequelizejs.com/manual/tutorial/querying.html
-  //
-  // we are looking for component such as:
-  // {
-  //   where: [
-  //     {
-  //       attribute: "service_name",
-  //       value: "Abandoned Vehicle"
-  //     },
-  //     {
-  //       opName: "or",
-  //       attribute: "agency_responsible",
-  //       value: ["Parks and Recreation", "Public Health"]
-  //     }, 
-  //     {
-  //       opName: "gte",
-  //       attribute: "requested_datetime",
-  //       value: "Fri Dec 01 2017 17:11:59 GMT-0500 (EST)"
-  //     }
-  //   ]
-  // }
-  //
+  /**
+   * ADD WHERE
+   * http://docs.sequelizejs.com/manual/tutorial/querying.html
+   *
+   * we are looking for component such as:
+   * {
+   * where: [
+   * {
+   * attribute: "service_name",
+   * value: "Abandoned Vehicle"
+   * },
+   * {
+   * opName: "or",
+   * attribute: "agency_responsible",
+   * value: ["Parks and Recreation", "Public Health"]
+   * }, 
+   * {
+   *  opName: "gte",
+   * attribute: "requested_datetime",
+   * value: "Fri Dec 01 2017 17:11:59 GMT-0500 (EST)"
+   * }
+   * ]
+   * }
+   **/ 
   if (component.where) {
     console.log("WHERE 1", component)
     options.where = {}
 
-    component.where.map(wh => {
+    // pull out neighborhood stuff and handle
+    // separately
+    const neighborhoodArr = component.where.filter(w => w.attribute === "neighborhood")
+    const whereArr = component.where.filter(w => w.attribute !== "neighborhood")
+
+    console.log("NEIGHBORHOODS", neighborhoodArr)
+    console.log("NOT NEIGH", whereArr.length)
+    
+    whereArr.forEach(wh => {
+      const attr = wh.attribute
+      const val = wh.value
+      const $in = Op.in
+
+      console.log('>>>', wh)
       if (wh.opName) {
         const operator = Op[wh.opName]
         const attr = wh.attribute
@@ -220,31 +233,35 @@ const _sequelizeGetComponentData = (Model, component) => {
           operator : val
         }
       } else {
-        options.where[wh.attribute] = wh.value
+        console.log("No WHERE OP", attr, val)
+        options.where[attr] = val
       }
     })
   }
 
-  console.log("WHERE 2", options.where)
+  console.log("WHERE 2", options)
   
   if (component.count) {
     options.attributes = [component.count, [sequelize.fn('count', sequelize.col(component.count)), 'count']]
     options.group = [component.count]
   }
 
-  if (component.aggregate) {
-    
-  }
   
   // ADD GROUP BY
   /*
   if (component.group) {
     options.group = component.group
   }
+  
+  if (component.aggregate) {
+    // @@TODO Implement
+  }
   */
   
-//  return Model.findAndCount(options)
-  return Model.findAll(options)
+  const raw = sequelize.dialect.QueryGenerator.selectQuery(component.resourceHandle, options)
+  console.log("RAW", raw)
+  return sequelize.query(raw)
+  // Model.findAll(options) // the old way using model findall
 }
 
 // get sql defs from sequelize and return
