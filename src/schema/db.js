@@ -257,10 +257,13 @@ const _sequelizeGetComponentData = (Model, component) => {
     // @@TODO Implement
   }
   */
-  
+
+// this works!
+ const mock = 'SELECT "service_name", count("service_name") AS "count" FROM philly_311 WHERE (ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'MANTUA\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true OR ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'MANTUA\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true OR ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'CEDAR_PARK\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true) GROUP BY "service_name";' 
+
   const raw = sequelize.dialect.QueryGenerator.selectQuery(component.resourceHandle, options)
   console.log("RAW", raw)
-  return sequelize.query(raw)
+  return sequelize.query(mock)
   // Model.findAll(options) // the old way using model findall
 }
 
