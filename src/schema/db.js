@@ -160,38 +160,51 @@ const _sequelizeGetComponentData = (component) => {
  const mock = 'SELECT "service_name", count("service_name") AS "count" FROM philly_311 WHERE (ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'MANTUA\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true OR ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'MANTUA\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true OR ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'CEDAR_PARK\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true) GROUP BY "service_name";' 
 
   const raw = sequelize.dialect.QueryGenerator.selectQuery(component.resourceHandle, options)
-  const hasWhere = whereArr.length
-  const withGISQuery = spliceGISQuery(raw, neighborhoods)
-  console.log("RAW", raw)
-  console.log("WITHGIS", withGISQuery)
-  return sequelize.query(withGISQuery)
+  const withgis = spliceGISQuery(raw, neighborhoods)
+  console.log('WITHGIS', withgis)
+  return sequelize.query(withgis)
 }
 
 // INSERT POSTGIS Query into raq sequelize query
-const spliceGISQuery = (raw, neighborhoods) => {
+const spliceGISQuery = (_raw, neighborhoods) => {
+  console.log("SPLICE -", neighborhoods)
+  const raw = _raw.slice(0,-1)  // remove trailing ;
+
   const insert = (str, index, value) => {
+    console.log(11111)
     return str.substr(0, index) + value + str.substr(index);
   }
 
   if (neighborhoods.length > 0) {
+    let newQuery = ""
     const hoods = neighborhoods[0].value
     const gisQueryParts = hoods.map(ng => {
-      console.log("NG:>>", ng)
       return `ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'${ng}\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true`
   }, '')
-    console.log('BITS', gisQueryParts)
-    const gisWHEREClause = `(${gisQueryParts.join(' OR ')})`
-    console.log('CLAUSE', gisWHEREClause)
-    const WHEREIndex = raw.indexOf('WHERE') + 5 // add 5 so that it goes AFTER the WHERE
-    console.log('WHERE', `(${WHEREIndex})`)
-    if (WHEREIndex > 0) {
-       return insert(raw, WHEREIndex, ` ${gisWHEREClause} AND `)
-    } else {
-      return splicedQuery = raw.append(` ${gisWHEREClause};`)
-    }
-    // insert gisWHEREClause after `WHERE` if hasWhere else append to raw
-  }
 
+    const gisWHEREClause = `(${gisQueryParts.join(' OR ')})`
+    const WHEREIndex = raw.indexOf('WHERE') + 5 // add 5 so that it goes AFTER the WHERE
+
+    if (WHEREIndex > 5) {
+      console.log("HAS WHERE")
+       newQuery = insert(raw, WHEREIndex, `${gisWHEREClause} AND `)
+    } else {
+      console.log("NO WHERE")
+      newQuery = raw.concat(` WHERE ${gisWHEREClause}`)
+    }
+
+    // move GROUP BY clause
+    const groupByMatch = newQuery.match(/GROUP BY ".+"/)
+    const _updated = newQuery.replace(groupByMatch, '').concat(` ${groupByMatch}`)
+    
+    // move LIMIT clause to end of query
+    const limitMatch = newQuery.match(/LIMIT \d+/)[0]
+    const __updated = _updated.replace(limitMatch,'').concat(` ${limitMatch}`).concat(';')
+
+    return __updated
+  }
+  
+  console.log("iRAWi")
   return raw
 }
 
