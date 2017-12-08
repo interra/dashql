@@ -108,21 +108,16 @@ const _sequelizeGetComponentData = (component) => {
    * }
    **/ 
   if (where) {
-    console.log("WHERE 1", component)
     options.where = {}
 
     // pull out neighborhood stuff and handle
     // separately
 
-    console.log("NEIGHBORHOODS", neighborhoods)
-    console.log("NOT NEIGH", whereArr.length)
-    
     whereArr.forEach(wh => {
       const attr = wh.attribute
       const val = wh.value
       const $in = Op.in
 
-      console.log('>>>', wh)
       if (wh.opName) {
         const operator = Op[wh.opName]
         const attr = wh.attribute
@@ -131,14 +126,11 @@ const _sequelizeGetComponentData = (component) => {
           operator : val
         }
       } else {
-        console.log("No WHERE OP", attr, val)
         options.where[attr] = val
       }
     })
   }
 
-  console.log("WHERE 2", options)
-  
   if (component.count) {
     options.attributes = [component.count, [sequelize.fn('count', sequelize.col(component.count)), 'count']]
     options.group = [component.count]
@@ -167,11 +159,9 @@ const _sequelizeGetComponentData = (component) => {
 
 // INSERT POSTGIS Query into raq sequelize query
 const spliceGISQuery = (_raw, neighborhoods) => {
-  console.log("SPLICE -", neighborhoods)
   const raw = _raw.slice(0,-1)  // remove trailing ;
 
   const insert = (str, index, value) => {
-    console.log(11111)
     return str.substr(0, index) + value + str.substr(index);
   }
 
@@ -186,25 +176,26 @@ const spliceGISQuery = (_raw, neighborhoods) => {
     const WHEREIndex = raw.indexOf('WHERE') + 5 // add 5 so that it goes AFTER the WHERE
 
     if (WHEREIndex > 5) {
-      console.log("HAS WHERE")
-       newQuery = insert(raw, WHEREIndex, `${gisWHEREClause} AND `)
+      newQuery = insert(raw, WHEREIndex, `${gisWHEREClause} AND `)
     } else {
-      console.log("NO WHERE")
       newQuery = raw.concat(` WHERE ${gisWHEREClause}`)
     }
 
     // move GROUP BY clause
     const groupByMatch = newQuery.match(/GROUP BY ".+"/)
-    const _updated = newQuery.replace(groupByMatch, '').concat(` ${groupByMatch}`)
+    if (groupByMatch) {
+      newQuery.replace(groupByMatch, '').concat(` ${groupByMatch}`)
+    }
     
     // move LIMIT clause to end of query
-    const limitMatch = newQuery.match(/LIMIT \d+/)[0]
-    const __updated = _updated.replace(limitMatch,'').concat(` ${limitMatch}`).concat(';')
+    const limitMatch = newQuery.match(/LIMIT \d+/)
+    if (limitMatch) {
+      newQuery.replace(limitMatch,'').concat(` ${limitMatch}`).concat(';')
+    }
 
-    return __updated
+    return newQuery
   }
   
-  console.log("iRAWi")
   return raw
 }
 
@@ -251,14 +242,8 @@ const _getSequelizeModel = (resourceHandle, fields) => {
   }, {})
 
   const Model = sequelize.define(resourceHandle, modelDef, {freezeTableName: true})
-  const FOO = sequelize.define('foo', {foo: Sequelize.STRING})
   
   return Model 
-}
-
-const _log = () => {
-  //@@TODO implement logging
-  // console.log(arguments)
 }
 
 module.exports = {
