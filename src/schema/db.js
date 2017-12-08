@@ -107,7 +107,7 @@ const _sequelizeGetComponentData = (component) => {
    * ]
    * }
    **/ 
-  if (where) {
+  if (where.length > 0) {
     options.where = {}
 
     // pull out neighborhood stuff and handle
@@ -116,15 +116,14 @@ const _sequelizeGetComponentData = (component) => {
     whereArr.forEach(wh => {
       const attr = wh.attribute
       const val = wh.value
-      const $in = Op.in
 
-      if (wh.opName) {
-        const operator = Op[wh.opName]
+      if (wh.op) {
+        const operator = Op[wh.op]
         const attr = wh.attribute
         const val = wh.value
-        options.where[wh.attribute] = {
-          operator : val
-        }
+        console.log("op", operator,attr,val)
+        options.where[attr] = {}
+        options.where[attr][operator] = val
       } else {
         options.where[attr] = val
       }
@@ -160,10 +159,11 @@ const _sequelizeGetComponentData = (component) => {
 // INSERT POSTGIS Query into raq sequelize query
 const spliceGISQuery = (_raw, neighborhoods) => {
   const raw = _raw.slice(0,-1)  // remove trailing ;
-
   const insert = (str, index, value) => {
     return str.substr(0, index) + value + str.substr(index);
   }
+
+  let groupByMatch, limitMatch
 
   if (neighborhoods.length > 0) {
     let newQuery = ""
@@ -181,19 +181,18 @@ const spliceGISQuery = (_raw, neighborhoods) => {
       newQuery = raw.concat(` WHERE ${gisWHEREClause}`)
     }
 
-    // move GROUP BY clause
-    const groupByMatch = newQuery.match(/GROUP BY ".+"/)
-    if (groupByMatch) {
-      newQuery.replace(groupByMatch, '').concat(` ${groupByMatch}`)
-    }
-    
-    // move LIMIT clause to end of query
-    const limitMatch = newQuery.match(/LIMIT \d+/)
-    if (limitMatch) {
-      newQuery.replace(limitMatch,'').concat(` ${limitMatch}`).concat(';')
-    }
+    // move GROUP BY and LIMIT clause to end of query
+    groupByMatch = newQuery.match(/GROUP BY ".+"/)[0] || ''
+    limitMatch = newQuery.match(/LIMIT \d+/)[0] || ''
 
-    return newQuery
+    const reordered = newQuery
+      .replace(groupByMatch, '')
+      .replace(limitMatch, '')
+      .concat(` ${groupByMatch}`)
+      .concat(` ${limitMatch}`).concat(';')
+
+    console.log('NN', reordered)
+    return reordered
   }
   
   return raw

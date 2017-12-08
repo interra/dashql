@@ -132,6 +132,7 @@ input ComponentInput {
 input WhereInput {
   attribute: String! # The name of the field to use in the where filter
   value: [String]! # The value to filter by
+  op: String # Optional operator value - based on http://docs.sequelizejs.com/manual/tutorial/querying.html#operators
 }
 
 # Queries persisted dataResources for component-level data
