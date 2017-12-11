@@ -22,7 +22,8 @@ const insertResource = () => {
  * API
  **/
 const getComponentData = (component) => {
-  const Model = _getSequelizeModel(component.resourceHandle, component.dataFields)
+  const dataFields = component.dataFields || []
+  const Model = _getSequelizeModel(component.resourceHandle, dataFields)
 
   const data = _sequelizeGetComponentData(component)
   const fields = _sequelizeGetFields(Model)
@@ -70,8 +71,8 @@ const _sequelizeGetComponentData = (component) => {
   // build select from datafields
   let options = {}
   const where = component.where || []
-  const neighborhoods= where.filter(w => w.attribute === "neighborhood")
-  const whereArr = where.filter(w => w.attribute !== "neighborhood")
+  const neighborhoods= where.filter(w => w && w.attribute === "neighborhood")
+  const whereArr = where.filter(w => w && w.attribute !== "neighborhood")
   
   // add ORDER
   if (component.order) {
@@ -182,12 +183,12 @@ const spliceGISQuery = (_raw, neighborhoods) => {
     }
 
     // move GROUP BY and LIMIT clause to end of query
-    groupByMatch = newQuery.match(/GROUP BY ".+"/)[0] || ''
-    limitMatch = newQuery.match(/LIMIT \d+/)[0] || ''
+    groupByMatch = newQuery.match(/GROUP BY ".+"/) || []
+    limitMatch = newQuery.match(/LIMIT \d+/) || []
 
     const reordered = newQuery
-      .replace(groupByMatch, '')
-      .replace(limitMatch, '')
+      .replace(groupByMatch[0] || '', '')
+      .replace(limitMatch[0] || '', '')
       .concat(` ${groupByMatch}`)
       .concat(` ${limitMatch}`).concat(';')
 

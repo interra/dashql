@@ -33,6 +33,8 @@ type Response {
 enum ComponentType {
   Chart
   Metric
+  Table
+  NeighborhoodFilter
 }
 
 type Component {
@@ -120,7 +122,7 @@ input ComponentInput {
   resourceHandle: String!
   componentKey: String! # this is a unique string that should map to a dashboard component
   # Select fields from resource
-  dataFields: [DataFieldInput]!
+  dataFields: [DataFieldInput]
   # JSON encoding of sequelize where - use any available sequelize operators on query http://docs.sequelizejs.com/manual/tutorial/querying.html#operators
   where: [WhereInput]
   count: String
