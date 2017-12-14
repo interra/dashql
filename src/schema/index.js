@@ -43,6 +43,11 @@ type Component {
   data: Response
 }
 
+type DataResponse {
+  data: Response
+  componentKey: String!
+}
+
 # Type DataResource describes a dataResource:
 # An imported set of data which can be queried
 # using a sequelize format (BETA)
@@ -140,7 +145,9 @@ input WhereInput {
 # Queries persisted dataResources for component-level data
 type Query {
   getComponents(components: [ComponentInput]!): [Component]
+  getServiceNumbersByNeighborhood(serviceName: String!, componentKey: String!): DataResponse
 }
+
 
 # Fetches top-level data objects from selected backend
 # and persists data locally as query-able dataResource

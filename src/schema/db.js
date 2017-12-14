@@ -148,7 +148,7 @@ const _sequelizeGetComponentData = (component) => {
   }
   */
 
-// this works!
+// reference this works!
  const mock = 'SELECT "service_name", count("service_name") AS "count" FROM philly_311 WHERE (ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'MANTUA\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true OR ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'MANTUA\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true OR ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'CEDAR_PARK\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true) GROUP BY "service_name";' 
 
   const raw = sequelize.dialect.QueryGenerator.selectQuery(component.resourceHandle, options)
@@ -197,6 +197,12 @@ const spliceGISQuery = (_raw, neighborhoods) => {
   }
   
   return raw
+}
+
+const getServiceNumbersByNeighborhood = (service) => {
+  const sql = `SELECT * FROM neighb_counts WHERE service_name = '${service}'`
+
+  return sequelize.query(sql)
 }
 
 // get sql defs from sequelize and return
@@ -249,4 +255,5 @@ const _getSequelizeModel = (resourceHandle, fields) => {
 module.exports = {
   insertResource: insertResource,
   getComponentData: getComponentData,
+  getServiceNumbersByNeighborhood: getServiceNumbersByNeighborhood
 }

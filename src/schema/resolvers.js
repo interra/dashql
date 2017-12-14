@@ -5,30 +5,22 @@ const stringify = require('json-stringify')
 const EXPIRY = 360
 
 const resolvers = {
-    Mutation: {
-      // fetch data
-      // and parse as cartodb api response
-      populateCartoDataResources: (_, {resources}) => {
-        const all = resources.map(resource => {
-        
-        switch (resource.type) {
-          case 'cartodb':
-            return _fetchCartoResource(resource)
-
-          default:
-            return {
-              type: 'unknown', // this will throw graphQL type exception
-              resourceHandle: resource.resourceHandle
-            }
-          }
-        })
-
-
-        return Promise.all(all)
-      },
-    },
-
     Query: {
+      getServiceNumbersByNeighborhood: (_, req) => {
+        return new Promise ((resolve, reject) => {
+          db.getServiceNumbersByNeighborhood(req.serviceName)
+            .then(res => {
+              resolve({
+                data: {
+                  JSONResponse: JSON.stringify(res[0])
+                  },
+                componentKey: req.componentKey
+              })
+            })
+            .catch(reject)
+        })
+      }, 
+      
       getComponents: (_, {components}) => {
         const all = components.map(component => {
           return new Promise ((resolve, reject) => {
