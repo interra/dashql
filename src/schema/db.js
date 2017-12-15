@@ -134,6 +134,7 @@ const _sequelizeGetComponentData = (component) => {
   if (component.count) {
     options.attributes = [component.count, [sequelize.fn('count', sequelize.col(component.count)), 'count']]
     options.group = [component.count]
+    options.order = [ ['count', 'DESC'] ]
   }
 
   
@@ -185,11 +186,14 @@ const spliceGISQuery = (_raw, neighborhoods) => {
     // move GROUP BY and LIMIT clause to end of query
     groupByMatch = newQuery.match(/GROUP BY ".+"/) || []
     limitMatch = newQuery.match(/LIMIT \d+/) || []
+    orderByMatch = newQuery.match(/ORDER BY .+ ASC|DESC/) || []
 
     const reordered = newQuery
       .replace(groupByMatch[0] || '', '')
+      .replace(orderByMatch[0] || '', '')
       .replace(limitMatch[0] || '', '')
       .concat(` ${groupByMatch}`)
+      .concat(` ${orderByMatch}`)
       .concat(` ${limitMatch}`).concat(';')
 
     console.log('NN', reordered)

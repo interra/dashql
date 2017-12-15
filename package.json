@@ -22,7 +22,8 @@
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon src/server.js"
+    "start": "nodemon src/server.js",
+    "up": "forever start --watch --watchDir src src/server.js"
   },
   "repository": {
     "type": "git",
