@@ -132,7 +132,7 @@ input ComponentInput {
   where: [WhereInput]
   count: String
   # JSON encoding of order http://sequelize.readthedocs.io/en/latest/docs/querying/#ordering
-  order: String  
+  order: OrderInput
   limit: Int 
 }
 
@@ -142,10 +142,16 @@ input WhereInput {
   op: String # Optional operator value - based on http://docs.sequelizejs.com/manual/tutorial/querying.html#operators
 }
 
+input OrderInput {
+  attribute: String! # The name of the field to use in the order clause
+  order: String! # ASC or DESC
+}
+
 # Queries persisted dataResources for component-level data
 type Query {
   getComponents(components: [ComponentInput]!): [Component]
   getServiceNumbersByNeighborhood(serviceName: String!, componentKey: String!): DataResponse
+  getOutstandingRequests(serviceName: String!, componentKey: String!, limit: Int! ): DataResponse
 }
 
 

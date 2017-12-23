@@ -7,6 +7,9 @@ const EXPIRY = 360
 const resolvers = {
     Query: {
       getServiceNumbersByNeighborhood: (_, req) => {
+        console.log('aa')
+
+        return {data: {JSONResponse: "foo"}, componentKey: "bar"}
         return new Promise ((resolve, reject) => {
           db.getServiceNumbersByNeighborhood(req.serviceName)
             .then(res => {
@@ -20,6 +23,24 @@ const resolvers = {
             .catch(reject)
         })
       }, 
+      
+      getOutstandingRequests: (_, req) => {
+        return new Promise ((resolve, reject) => {
+          db.getOutstandingRequests(req.serviceName, req.limit)
+            .then(res => {
+              console.log("OUTS", res)
+              resolve({
+                data: {
+                  JSONResponse: JSON.stringify(res[0])
+                  },
+                componentKey: req.componentKey
+              })
+            })
+            .catch(reject)
+        })
+      }, 
+
+
       
       getComponents: (_, {components}) => {
         const all = components.map(component => {

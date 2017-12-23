@@ -11,13 +11,6 @@ const sequelize = new Sequelize('postgres://postgres:postgres@localhost:5432/pos
   })
 const Op = sequelize.Op
 
-// note -we are currently doing resource 
-// insertion via a node module
-// not via API
-const insertResource = () => {
-  return 'NOT IMPLEMENTED'
-}
-
 /**
  * API
  **/
@@ -68,15 +61,19 @@ const sequelizeFields= [
 ]
 
 const _sequelizeGetComponentData = (component) => {
+  console.log("CCCC", component)
   // build select from datafields
   let options = {}
   const where = component.where || []
   const neighborhoods= where.filter(w => w && w.attribute === "neighborhood")
   const whereArr = where.filter(w => w && w.attribute !== "neighborhood")
   
+  options.attributes = []
+  
   // add ORDER
   if (component.order) {
-    options.order = JSON.parse(component.order)
+    console.log('this order', component.order)
+    options.order = [component.order.attribute, component.order.order]
   }
   
   // add LIMIT
@@ -132,10 +129,22 @@ const _sequelizeGetComponentData = (component) => {
   }
 
   if (component.count) {
-    options.attributes = [component.count, [sequelize.fn('count', sequelize.col(component.count)), 'count']]
+    options.attributes.push([sequelize.fn('COUNT', sequelize.col(component.count)), 'count'])
     options.group = [component.count]
-    options.order = [ ['count', 'DESC'] ]
   }
+
+  if (component.dataFields) {
+    component.dataFields.forEach(field => {
+      console.log("datafields", field)
+      options.attributes.push(field.field)
+    })
+  }
+
+  if (component.order) {
+    console.log("ORDER>>>>", component.order)
+    options.order = [ [component.order.attribute, component.order.order] ]
+  }
+
 
   
   // ADD GROUP BY
@@ -209,6 +218,12 @@ const getServiceNumbersByNeighborhood = (service) => {
   return sequelize.query(sql)
 }
 
+const getOutstandingRequests = (service, limit) => {
+  const sql = `SELECT * FROM philly_311 WHERE status = 'Open' AND service_name = '${service}' ORDER BY requested_datetime ASC limit ${limit}`
+  
+  return sequelize.query(sql)
+}
+
 // get sql defs from sequelize and return
 // fields array for graphql api
 const _sequelizeGetFields = (Model) => {
@@ -257,7 +272,7 @@ const _getSequelizeModel = (resourceHandle, fields) => {
 }
 
 module.exports = {
-  insertResource: insertResource,
   getComponentData: getComponentData,
+  getOutstandingRequests: getOutstandingRequests,
   getServiceNumbersByNeighborhood: getServiceNumbersByNeighborhood
 }
