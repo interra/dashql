@@ -7,9 +7,6 @@ const EXPIRY = 360
 const resolvers = {
     Query: {
       getServiceNumbersByNeighborhood: (_, req) => {
-        console.log('aa')
-
-        return {data: {JSONResponse: "foo"}, componentKey: "bar"}
         return new Promise ((resolve, reject) => {
           db.getServiceNumbersByNeighborhood(req.serviceName)
             .then(res => {
