@@ -25,6 +25,7 @@ type Response {
   #  { fieldName1:  value, fieldName2: value, ...}
   # ]
   JSONResponse: String
+  responseType: String
   total_rows: Int
   time: Float # @@TODO get total response time
   fields: [ResponseField]
@@ -43,8 +44,13 @@ type Component {
   data: Response
 }
 
+enum ResponseType {
+  JSONResponse
+}
+
 type DataResponse {
   data: Response
+  responseType: ResponseType!
   componentKey: String!
 }
 
@@ -150,7 +156,7 @@ input OrderInput {
 # Queries persisted dataResources for component-level data
 type Query {
   getComponents(components: [ComponentInput]!): [Component]
-  getServiceNumbersByNeighborhood(serviceName: String!, componentKey: String!): DataResponse
+  getServiceNumbersByNeighborhood(serviceName: String!, componentKey: String! ): DataResponse
   getOutstandingRequests(serviceName: String!, componentKey: String!, limit: Int! ): DataResponse
 }
 

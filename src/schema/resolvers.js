@@ -14,7 +14,8 @@ const resolvers = {
                 data: {
                   JSONResponse: JSON.stringify(res[0])
                   },
-                componentKey: req.componentKey
+                componentKey: req.componentKey,
+                responseType: "JSONResponse"
               })
             })
             .catch(reject)
@@ -30,7 +31,8 @@ const resolvers = {
                 data: {
                   JSONResponse: JSON.stringify(res[0])
                   },
-                componentKey: req.componentKey
+                componentKey: req.componentKey,
+                responseType: "JSONResponse"
               })
             })
             .catch(reject)
