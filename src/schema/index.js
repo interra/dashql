@@ -1,4 +1,3 @@
-const JSON = require('graphql-type-json')
 const { makeExecutableSchema } = require('graphql-tools')
 const resolvers = require('./resolvers')
 
@@ -33,6 +32,7 @@ type Response {
 
 enum ComponentType {
   Chart
+  ChartNVD3
   Metric
   Table
   NeighborhoodFilter
