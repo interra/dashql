@@ -1,14 +1,7 @@
+const conf = require('../../config.json')
 const Sequelize = require('sequelize')
-const sequelize = new Sequelize('postgres://postgres:postgres@localhost:5432/postgres', 
-  {
-    logging: false,
-    pool: {
-      max: 10, 
-      min: 0,
-      idle: 20000,
-      acquire: 20000
-    }   
-  })
+const sequelize = new Sequelize(conf.dbConnect, conf.dbCons)
+
 const Op = sequelize.Op
 
 /**

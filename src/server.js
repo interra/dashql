@@ -2,8 +2,9 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express')
 const schema = require('./schema/index')
+conf = require('../config.json')
 const app = express()
-const APP_PORT = 3333
+const APP_PORT = conf.graphqlPort
 
 app.use(function(req, res, next) {
     
