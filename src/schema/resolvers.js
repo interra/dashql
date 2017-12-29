@@ -26,7 +26,6 @@ const resolvers = {
         return new Promise ((resolve, reject) => {
           db.getOutstandingRequests(req.serviceName, req.limit)
             .then(res => {
-              console.log("OUTS", res)
               resolve({
                 data: {
                   JSONResponse: JSON.stringify(res[0])
@@ -46,7 +45,8 @@ const resolvers = {
           return new Promise ((resolve, reject) => {
               db.getComponentData(component)
              .then( (res) => {
-                const data = res[0][0]
+              console.log("COMPONENTS",res)
+                const data = res[0]
                 const fields = res[1]
                 const dataJson = stringify(data)
 

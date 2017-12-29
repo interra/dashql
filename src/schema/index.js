@@ -137,6 +137,7 @@ input ComponentInput {
   # JSON encoding of sequelize where - use any available sequelize operators on query http://docs.sequelizejs.com/manual/tutorial/querying.html#operators
   where: [WhereInput]
   count: String
+  group: String
   # JSON encoding of order http://sequelize.readthedocs.io/en/latest/docs/querying/#ordering
   order: OrderInput
   limit: Int 

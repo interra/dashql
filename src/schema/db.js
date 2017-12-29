@@ -1,7 +1,6 @@
 const conf = require('../../config.json')
 const Sequelize = require('sequelize')
 const sequelize = new Sequelize(conf.dbConnect, conf.dbCons)
-
 const Op = sequelize.Op
 
 /**
@@ -11,7 +10,7 @@ const getComponentData = (component) => {
   const dataFields = component.dataFields || []
   const Model = _getSequelizeModel(component.resourceHandle, dataFields)
 
-  const data = _sequelizeGetComponentData(component)
+  const data = _sequelizeGetComponentData(component, Model)
   const fields = _sequelizeGetFields(Model)
 
   return Promise.all([data,fields])
@@ -53,8 +52,7 @@ const sequelizeFields= [
 "VIRTUAL",
 ]
 
-const _sequelizeGetComponentData = (component) => {
-  console.log("CCCC", component)
+const _sequelizeGetComponentData = (component, Model) => {
   // build select from datafields
   let options = {}
   const where = component.where || []
@@ -139,9 +137,6 @@ const _sequelizeGetComponentData = (component) => {
   }
 
 
-  
-  // ADD GROUP BY
-  /*
   if (component.group) {
     options.group = component.group
   }
@@ -149,15 +144,13 @@ const _sequelizeGetComponentData = (component) => {
   if (component.aggregate) {
     // @@TODO Implement
   }
-  */
+  
+  const result = Model.findAll(options)
+  return result
 
-// reference this works!
- const mock = 'SELECT "service_name", count("service_name") AS "count" FROM philly_311 WHERE (ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'MANTUA\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true OR ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'MANTUA\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true OR ST_Contains(ST_SetSRID((SELECT the_geometry FROM neighborhoods WHERE name=\'CEDAR_PARK\'),4326), ST_SetSRID(philly_311.the_geom, 4326))=true) GROUP BY "service_name";' 
-
-  const raw = sequelize.dialect.QueryGenerator.selectQuery(component.resourceHandle, options)
-  const withgis = spliceGISQuery(raw, neighborhoods)
-  console.log('WITHGIS', withgis)
-  return sequelize.query(withgis)
+  // const raw = sequelize.dialect.QueryGenerator.selectQuery(component.resourceHandle, options)
+  // const withgis = spliceGISQuery(raw, neighborhoods)
+  // return sequelize.query(withgis)
 }
 
 // INSERT POSTGIS Query into raq sequelize query
@@ -198,7 +191,6 @@ const spliceGISQuery = (_raw, neighborhoods) => {
       .concat(` ${orderByMatch}`)
       .concat(` ${limitMatch}`).concat(';')
 
-    console.log('NN', reordered)
     return reordered
   }
   
@@ -241,24 +233,26 @@ const _getSequelizeModel = (resourceHandle, fields) => {
   let modelDef = fields.reduce((acc, item) => {
     const fieldType = item.type
     let _acc = Object.assign({}, acc)
+
     _acc[item.field] = {
       type: fieldType,
       tableName: item.resourceHandle,
     }
 
-    _acc.createdAt = {
+    return _acc
+  }, {})
+    
+  modelDef.createdAt = {
         type: Sequelize.DATE,
         field: 'created_at'
     }
 
-    _acc.updatedAt = {
+  modelDef.updatedAt = {
         type: Sequelize.DATE,
         field: 'updated_at'
     }
 
-    return _acc
-  }, {})
-
+  console.log("MM>", modelDef)
   const Model = sequelize.define(resourceHandle, modelDef, {freezeTableName: true})
   
   return Model 
