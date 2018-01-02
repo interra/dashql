@@ -45,7 +45,6 @@ const resolvers = {
           return new Promise ((resolve, reject) => {
               db.getComponentData(component)
              .then( (res) => {
-              console.log("COMPONENTS",res)
                 const data = res[0]
                 const fields = res[1]
                 const dataJson = stringify(data)

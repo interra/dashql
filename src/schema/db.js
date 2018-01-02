@@ -63,7 +63,6 @@ const _sequelizeGetComponentData = (component, Model) => {
   
   // add ORDER
   if (component.order) {
-    console.log('this order', component.order)
     options.order = [component.order.attribute, component.order.order]
   }
   
@@ -110,7 +109,6 @@ const _sequelizeGetComponentData = (component, Model) => {
         const operator = Op[wh.op]
         const attr = wh.attribute
         const val = wh.value
-        console.log("op", operator,attr,val)
         options.where[attr] = {}
         options.where[attr][operator] = val
       } else {
@@ -118,7 +116,6 @@ const _sequelizeGetComponentData = (component, Model) => {
       }
     })
   }
-
   if (component.count) {
     options.attributes.push([sequelize.fn('COUNT', sequelize.col(component.count)), 'count'])
     options.group = [component.count]
@@ -126,13 +123,11 @@ const _sequelizeGetComponentData = (component, Model) => {
 
   if (component.dataFields) {
     component.dataFields.forEach(field => {
-      console.log("datafields", field)
       options.attributes.push(field.field)
     })
   }
 
   if (component.order) {
-    console.log("ORDER>>>>", component.order)
     options.order = [ [component.order.attribute, component.order.order] ]
   }
 
@@ -204,8 +199,10 @@ const getServiceNumbersByNeighborhood = (service) => {
 }
 
 const getOutstandingRequests = (service, limit) => {
-  const sql = `SELECT * FROM philly_311 WHERE status = 'Open' AND service_name = '${service}' ORDER BY requested_datetime ASC limit ${limit}`
-  
+  limit = 1000
+  console.log("OUTST", service, limit)
+  const sql = (service) ? `SELECT * FROM philly_311 WHERE "service_name" = '${service}' ORDER BY requested_datetime DESC LIMIT '${limit}'` : `SELECT * FROM philly_311 ORDER BY requested_datetime DESC LIMIT '${limit}'`
+  console.log("SQL", sql) 
   return sequelize.query(sql)
 }
 
@@ -252,7 +249,6 @@ const _getSequelizeModel = (resourceHandle, fields) => {
         field: 'updated_at'
     }
 
-  console.log("MM>", modelDef)
   const Model = sequelize.define(resourceHandle, modelDef, {freezeTableName: true})
   
   return Model 
