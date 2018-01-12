@@ -1,26 +1,65 @@
 const _ = require('lodash')
+const md5 = require('md5')
 const rp = require('request-promise')
 const db = require('./db')
+const redis = require('redis')
 const stringify = require('json-stringify')
-const EXPIRY = 360
+const EXPIRY =  360
+const REDISPORT =  6379
+const rc = redis.createClient(REDISPORT)
+
+const getCache = (key) => {
+  return new Promise((resolve, reject) => {
+      rc.get(key, (err, res) => {
+      if (err) reject(err)
+      resolve(res)
+    })
+  })
+}
+
+const cacheWrite = (key, data) => {
+  rc.set(key, data)
+}
 
 const resolvers = {
     Query: {
       getServiceNumbersByNeighborhood: (_, req) => {
+        const cacheKey = (md5(JSON.stringify(req)));
         return new Promise ((resolve, reject) => {
-          db.getServiceNumbersByNeighborhood(req.serviceName)
-            .then(res => {
-              resolve({
-                data: {
-                  JSONResponse: JSON.stringify(res[0])
-                  },
-                componentKey: req.componentKey,
-                responseType: "JSONResponse"
+          getCache(cacheKey).then(cache => {
+          
+          if (cache) {
+            const APIRes= {
+              data: {
+                JSONResponse: cache
+              },
+              componentKey: req.componentKey,
+              responseType: "JSONResponse"
+            }
+            resolve(APIRes)
+          } else {
+
+              db.getServiceNumbersByNeighborhood(req.serviceName)
+              .then(res => {
+                const jsonData = JSON.stringify(res[0])
+                cacheWrite(cacheKey, jsonData)
+                const APIRes =
+                {
+                  data: {
+                    JSONResponse: JSON.stringify(res[0])
+                    },
+                  componentKey: req.componentKey,
+                  responseType: "JSONResponse"
+                }
+                // cache write APIRes
+                resolve(APIRes)
               })
-            })
-            .catch(reject)
+              .catch(reject)
+          }
         })
-      }, 
+        .catch(console.log)
+      })
+    }, 
       
       getOutstandingRequests: (_, req) => {
         return new Promise ((resolve, reject) => {
@@ -42,13 +81,27 @@ const resolvers = {
       
       getComponents: (_, {components}) => {
         const all = components.map(component => {
+        const cacheKey = (md5(JSON.stringify(component)));
           return new Promise ((resolve, reject) => {
+          getCache(cacheKey).then(cache => {
+          
+          if (cache) {
+            const APIRes= {
+              type: component.type,
+              componentKey: component.componentKey,
+              data: {
+                JSONResponse: cache
+              },
+              responseType: "JSONResponse"
+            }
+            resolve(APIRes)
+          } else {
               db.getComponentData(component)
              .then( (res) => {
                 const data = res[0]
                 const fields = res[1]
                 const dataJson = stringify(data)
-
+                cacheWrite(cacheKey, dataJson)
                 resolve({
                   type: component.type,
                   componentKey: component.componentKey,
@@ -61,15 +114,15 @@ const resolvers = {
               })
               .catch(err => {
                 reject(err)
-            })
+              })
+            }
           })
         })
-
-        return Promise.all(all)
-    }
+    })
+    return Promise.all(all)
+   }
   }
 }
-
 /**
  * CARTO DataResource fetchers
  ***/

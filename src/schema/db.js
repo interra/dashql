@@ -9,7 +9,6 @@ const Op = sequelize.Op
 const getComponentData = (component) => {
   const dataFields = component.dataFields || []
   const Model = _getSequelizeModel(component.resourceHandle, dataFields)
-
   const data = _sequelizeGetComponentData(component, Model)
   const fields = _sequelizeGetFields(Model)
 
@@ -193,7 +192,7 @@ const spliceGISQuery = (_raw, neighborhoods) => {
 }
 
 const getServiceNumbersByNeighborhood = (service) => {
-  const sql = `SELECT * FROM neighb_counts WHERE service_name = '${service}'`
+  const sql = `SELECT neighb_counts.*,  ( neighb_counts.count / (neighborhoods_import.shape_area * 0.00000038610215)) AS rate FROM neighb_counts, neighborhoods_import WHERE neighb_counts.neighborhood = neighborhoods_import.name AND service_name = '${service}' AND neighb_counts.count > 0;`
 
   return sequelize.query(sql)
 }

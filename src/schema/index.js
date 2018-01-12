@@ -34,6 +34,7 @@ enum ComponentType {
   Chart
   ChartNVD3
   Metric
+  MetricSelect
   Table
   NeighborhoodFilter
 }
