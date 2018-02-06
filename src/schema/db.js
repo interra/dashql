@@ -192,16 +192,24 @@ const spliceGISQuery = (_raw, neighborhoods) => {
 }
 
 const getServiceNumbersByNeighborhood = (service) => {
-  const sql = `SELECT neighb_counts.*,  ( neighb_counts.count / (neighborhoods_import.shape_area * 0.00000038610215)) AS rate FROM neighb_counts, neighborhoods_import WHERE neighb_counts.neighborhood = neighborhoods_import.name AND service_name = '${service}' AND neighb_counts.count > 0;`
+  const sql = `SELECT neighb_counts.*, (neighborhoods_import.shape_area * 0.00000038610215) AS sqmi, ( neighb_counts.count / (neighborhoods_import.shape_area * 0.00000038610215)) AS rate FROM neighb_counts, neighborhoods_import WHERE neighb_counts.neighborhood = neighborhoods_import.name AND service_name = '${service}' AND neighb_counts.count > 0;`
 
+  return sequelize.query(sql)
+}
+
+const getCapsByDistrict = (complaint) => {
+  const where = (complaint) ? `WHERE general_cap_classification = ${complaint}` : ''
+
+  const sql = `SELECT count(general_cap_classification), general_cap_classification, dist_occurrence FROM complaints ${where} GROUP BY general_cap_classification, dist_occurrence;`
+
+  
   return sequelize.query(sql)
 }
 
 const getOutstandingRequests = (service, limit) => {
   limit = 1000
-  console.log("OUTST", service, limit)
+  
   const sql = (service) ? `SELECT * FROM philly_311 WHERE "service_name" = '${service}' ORDER BY requested_datetime DESC LIMIT '${limit}'` : `SELECT * FROM philly_311 ORDER BY requested_datetime DESC LIMIT '${limit}'`
-  console.log("SQL", sql) 
   return sequelize.query(sql)
 }
 
@@ -255,6 +263,7 @@ const _getSequelizeModel = (resourceHandle, fields) => {
 
 module.exports = {
   getComponentData: getComponentData,
+  getCapsByDistrict: getCapsByDistrict, 
   getOutstandingRequests: getOutstandingRequests,
   getServiceNumbersByNeighborhood: getServiceNumbersByNeighborhood
 }

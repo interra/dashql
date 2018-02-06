@@ -23,6 +23,11 @@ const cacheWrite = (key, data) => {
 
 const resolvers = {
     Query: {
+      /**
+       * @TODO - This is a user implentation
+       * We need a mechanism for extending the
+       * ODV default API with user jawns
+       */
       getServiceNumbersByNeighborhood: (_, req) => {
         const cacheKey = (md5(JSON.stringify(req)));
         return new Promise ((resolve, reject) => {
@@ -60,8 +65,50 @@ const resolvers = {
         .catch(console.log)
       })
     }, 
+    
+  /**
+   * @TODO - This is a user implentation
+   * We need a mechanism for extending the
+   * ODV default API with user jawns
+   */
+    getCapsByDistrict: (_, req) => {
+      const mock = {
+        data: {
+          JSONResponse: JSON.stringify({foo:"bar"})
+        },
+        componentKey: req.componentKey,
+        responseType: "JSONResponse"
+      }
       
-      getOutstandingRequests: (_, req) => {
+      // @TODO implement cache:
+      const cacheKey = (md5(JSON.stringify(req)));
+      
+      return new Promise ((resolve, reject) => {
+        db.getCapsByDistrict(req.serviceName)
+        .then(res => {
+          console.log("Caps", res)
+          const data = res[0]
+          const fields = res[1]
+          const dataJson = stringify(data)
+          resolve({
+            data: {
+              JSONResponse: dataJson
+            },
+            componentKey: req.componentKey,
+            responseType: "JSONResponse",
+            fields: fields
+          })
+        })
+        .catch(reject)
+      })
+    },
+      
+  /**
+   * @TODO - This is a user implentation
+   * We need a mechanism for extending the
+   * ODV default API with user jawns
+   */
+    getOutstandingRequests: (_, req) => {
         return new Promise ((resolve, reject) => {
           db.getOutstandingRequests(req.serviceName, req.limit)
             .then(res => {
@@ -78,7 +125,13 @@ const resolvers = {
       }, 
 
 
-      
+      /**
+       * @@TODO DOCUMENT
+       *
+       * This is part of the stable API for
+       * ODV and should be documented and
+       * ship with the library
+       **/
       getComponents: (_, {components}) => {
         const all = components.map(component => {
         const cacheKey = (md5(JSON.stringify(component)));

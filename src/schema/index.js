@@ -160,6 +160,7 @@ type Query {
   getComponents(components: [ComponentInput]!): [Component]
   getServiceNumbersByNeighborhood(serviceName: String!, componentKey: String! ): DataResponse
   getOutstandingRequests(serviceName: String!, componentKey: String!, limit: Int! ): DataResponse
+  getCapsByDistrict(complaintType: String, componentKey: String! ): DataResponse
 }
 
 
