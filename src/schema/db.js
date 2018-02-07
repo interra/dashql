@@ -198,10 +198,15 @@ const getServiceNumbersByNeighborhood = (service) => {
 }
 
 const getCapsByDistrict = (complaint) => {
-  const where = (complaint) ? `WHERE general_cap_classification = ${complaint}` : ''
-
-  const sql = `SELECT count(general_cap_classification), general_cap_classification, dist_occurrence FROM complaints ${where} GROUP BY general_cap_classification, dist_occurrence;`
-
+  let sql
+  
+  if (complaint) {
+    console.log("COMPLAINT: ", complaint)
+    sql = `SELECT count(*), general_cap_classification, dist_occurrence FROM complaints WHERE general_cap_classification = '${complaint}' GROUP BY general_cap_classification, dist_occurrence;`
+  } else {
+    console.log("NO COMPLAINT")
+    sql = `SELECT count(*), dist_occurrence FROM complaints GROUP BY dist_occurrence;`
+  }
   
   return sequelize.query(sql)
 }

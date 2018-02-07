@@ -72,6 +72,7 @@ const resolvers = {
    * ODV default API with user jawns
    */
     getCapsByDistrict: (_, req) => {
+      console.log(req)
       const mock = {
         data: {
           JSONResponse: JSON.stringify({foo:"bar"})
@@ -84,7 +85,7 @@ const resolvers = {
       const cacheKey = (md5(JSON.stringify(req)));
       
       return new Promise ((resolve, reject) => {
-        db.getCapsByDistrict(req.serviceName)
+        db.getCapsByDistrict(req.complaintType)
         .then(res => {
           console.log("Caps", res)
           const data = res[0]
