@@ -161,6 +161,7 @@ type Query {
   getServiceNumbersByNeighborhood(serviceName: String!, componentKey: String! ): DataResponse
   getOutstandingRequests(serviceName: String!, componentKey: String!, limit: Int! ): DataResponse
   getCapsByDistrict(complaintType: String, componentKey: String! ): DataResponse
+  getTimeSeriesData(complaintType: String, componentKey: String! ): DataResponse
 }
 
 

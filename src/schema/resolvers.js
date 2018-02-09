@@ -23,6 +23,29 @@ const cacheWrite = (key, data) => {
 
 const resolvers = {
     Query: {
+    
+    /**
+     * USER - police dash
+     **/
+    getTimeSeriesData: (_, req) => {
+      return new Promise ((resolve, reject) => {
+        db.getTimeSeriesData(req.complaintType)
+        .then(res => {
+          const dataJson = stringify(res)
+          resolve({
+            data: {
+              JSONResponse: dataJson
+            },
+            componentKey: req.componentKey,
+            responseType: "JSONResponse",
+            fields: []
+          })
+        })
+        .catch(reject)
+      })
+      
+      },
+      
       /**
        * @TODO - This is a user implentation
        * We need a mechanism for extending the
@@ -43,7 +66,6 @@ const resolvers = {
             }
             resolve(APIRes)
           } else {
-
               db.getServiceNumbersByNeighborhood(req.serviceName)
               .then(res => {
                 const jsonData = JSON.stringify(res[0])
@@ -72,22 +94,9 @@ const resolvers = {
    * ODV default API with user jawns
    */
     getCapsByDistrict: (_, req) => {
-      console.log(req)
-      const mock = {
-        data: {
-          JSONResponse: JSON.stringify({foo:"bar"})
-        },
-        componentKey: req.componentKey,
-        responseType: "JSONResponse"
-      }
-      
-      // @TODO implement cache:
-      const cacheKey = (md5(JSON.stringify(req)));
-      
       return new Promise ((resolve, reject) => {
         db.getCapsByDistrict(req.complaintType)
         .then(res => {
-          console.log("Caps", res)
           const data = res[0]
           const fields = res[1]
           const dataJson = stringify(data)

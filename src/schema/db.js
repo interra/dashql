@@ -191,6 +191,9 @@ const spliceGISQuery = (_raw, neighborhoods) => {
   return raw
 }
 
+/**
+ * USER
+ **/
 const getServiceNumbersByNeighborhood = (service) => {
   const sql = `SELECT neighb_counts.*, (neighborhoods_import.shape_area * 0.00000038610215) AS sqmi, ( neighb_counts.count / (neighborhoods_import.shape_area * 0.00000038610215)) AS rate FROM neighb_counts, neighborhoods_import WHERE neighb_counts.neighborhood = neighborhoods_import.name AND service_name = '${service}' AND neighb_counts.count > 0;`
 
@@ -209,6 +212,17 @@ const getCapsByDistrict = (complaint) => {
   }
   
   return sequelize.query(sql)
+}
+
+const getTimeSeriesData = (complaint) => {
+  const datasql = `SELECT to_char(date_received, 'Mon') as mon, extract(year from date_received) as year, count(*), general_cap_classification FROM complaints GROUP BY mon, year, general_cap_classification;`
+  const labelsql = `SELECT DISTINCT to_char(date_received, 'Mon') as mon, extract(year from date_received) as year FROM complaints`
+  
+  return new Promise((resolve, reject) => {
+    Promise.all([sequelize.query(datasql), sequelize.query(labelsql)]).then(resolve)
+    .catch(reject)
+  })
+
 }
 
 const getOutstandingRequests = (service, limit) => {
@@ -270,5 +284,6 @@ module.exports = {
   getComponentData: getComponentData,
   getCapsByDistrict: getCapsByDistrict, 
   getOutstandingRequests: getOutstandingRequests,
-  getServiceNumbersByNeighborhood: getServiceNumbersByNeighborhood
+  getServiceNumbersByNeighborhood: getServiceNumbersByNeighborhood,
+  getTimeSeriesData: getTimeSeriesData
 }
