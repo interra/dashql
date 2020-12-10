@@ -1,3 +1,12 @@
+# DEPRECATED -- Use [311_import repo](git@github.com:starsinmypockets/311_import.git
+) to import data to postgres
+
+# TODO
+
+* There may be some nuggets in here that should go into the _import_ repository
+* Alternately, we could use this directory for doing API calls to get initial data from carto (or alternate sources as needed)
+* Stay tuned
+
 # Import 311 DATA to 
 Here's our tooling for pulling in JSON to local postgres for further processing.
 

@@ -193,7 +193,7 @@ const spliceGISQuery = (_raw, neighborhoods) => {
 }
 
 const getServiceNumbersByNeighborhood = (service) => {
-  const sql = `SELECT * FROM neighb_counts WHERE service_name = '${service}'`
+  const sql = `SELECT neighb_counts.*, neighborhoods.shape_area as sqmi FROM neighb_counts LEFT JOIN neighborhoods on neighborhoods.name = neighb_counts.neighborhood WHERE service_name = '${service}'`
 
   return sequelize.query(sql)
 }
